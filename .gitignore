@@ -1,0 +1,7 @@
+coverage/
+dist/
+node_modules/
+site/
+vendor/
+.phpunit.result.cache
+.DS_Store

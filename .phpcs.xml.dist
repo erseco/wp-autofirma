@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<ruleset name="WP AutoFirma">
+    <description>WordPress Coding Standards adaptados a indentación con espacios.</description>
+
+    <file>wp-autofirma.php</file>
+    <file>admin</file>
+    <file>includes</file>
+    <file>tests/php</file>
+
+    <arg name="colors"/>
+    <arg value="sp"/>
+
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>build/*</exclude-pattern>
+
+    <rule ref="WordPress">
+        <exclude name="Generic.WhiteSpace.DisallowSpaceIndent"/>
+        <exclude name="WordPress.WhiteSpace.DisallowInlineTabs"/>
+    </rule>
+    <rule ref="Generic.WhiteSpace.DisallowTabIndent"/>
+</ruleset>

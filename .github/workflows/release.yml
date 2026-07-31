@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: composer install --no-interaction --prefer-dist
+      - run: npm ci
+      - name: Verificar versiones
+        run: |
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          PLUGIN_VERSION="$(sed -n 's/^ \* Version:[[:space:]]*//p' wp-autofirma.php)"
+          STABLE_TAG="$(sed -n 's/^Stable tag:[[:space:]]*//p' readme.txt)"
+          test "v${PACKAGE_VERSION}" = "${GITHUB_REF_NAME}"
+          test "${PACKAGE_VERSION}" = "${PLUGIN_VERSION}"
+          test "${PACKAGE_VERSION}" = "${STABLE_TAG}"
+      - run: composer check
+      - run: npm run check
+      - run: git diff --exit-code -- build
+      - run: npm run package
+      - name: Crear GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" dist/*.zip --generate-notes

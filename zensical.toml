@@ -1,0 +1,32 @@
+[project]
+site_name = "WP AutoFirma"
+site_description = "Firma PDF de WordPress mediante AutoFirma"
+site_url = "https://erseco.github.io/wp-autofirma/"
+repo_url = "https://github.com/erseco/wp-autofirma"
+repo_name = "erseco/wp-autofirma"
+docs_dir = "docs"
+site_dir = "site"
+nav = [
+  { "Inicio" = "index.md" },
+  { "Guía" = [
+    { "Instalación" = "guia/instalacion.md" },
+    { "Uso" = "guia/uso.md" },
+    { "Desarrollo" = "guia/desarrollo.md" }
+  ] },
+  { "Playground" = "playground.md" },
+  { "Seguridad y privacidad" = "seguridad.md" },
+  { "API y hooks" = "api.md" },
+  { "Arquitectura" = [
+    { "Introducción" = "arquitectura/README.md" },
+    { "ADR" = "arquitectura/adr/records.md" },
+    { "SDD" = "arquitectura/sdd/records.md" }
+  ] }
+]
+
+[project.theme]
+language = "es"
+features = [
+  "navigation.sections",
+  "navigation.top",
+  "content.code.copy"
+]

@@ -1,0 +1,27 @@
+{
+  "name": "wp-autofirma",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Integración de AutoFirma con la biblioteca de medios de WordPress",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erseco/wp-autofirma.git"
+  },
+  "scripts": {
+    "build": "esbuild assets/js/admin.js --bundle --format=iife --global-name=WPAutoFirmaAdmin --outfile=build/admin.js --sourcemap",
+    "check": "npm run format:check && npm run test:js && npm run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "package": "bash scripts/package.sh",
+    "test:js": "vitest run"
+  },
+  "dependencies": {
+    "@erseco/autofirma-client": "git+https://github.com/erseco/autofirma-client.git#2c0d1fc2f47ed34bb99b4d554f134cc9b9c47fe8"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.5",
+    "prettier": "^3.6.2",
+    "vitest": "^3.2.4"
+  }
+}
