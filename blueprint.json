@@ -26,10 +26,8 @@
     {
       "step": "installPlugin",
       "pluginData": {
-        "resource": "git:directory",
-        "url": "https://github.com/erseco/wp-autofirma",
-        "ref": "main",
-        "refType": "refname"
+        "resource": "url",
+        "url": "https://github.com/erseco/wp-autofirma/archive/refs/heads/main.zip"
       },
       "options": {
         "activate": true

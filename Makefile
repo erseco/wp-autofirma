@@ -2,6 +2,10 @@
 
 DOMAIN := wp-autofirma
 POT    := languages/$(DOMAIN).pot
+# `wp` se ejecuta con el directorio de trabajo en la raíz de WordPress, no en el
+# plugin: sin esta ruta escanearía la instalación entera y escribiría el
+# catálogo dentro del contenedor.
+PLUGIN_IN_CONTAINER := wp-content/plugins/$(DOMAIN)
 # Lo que no forma parte del plugin distribuido y no debe entrar en el catálogo.
 I18N_EXCLUDE := vendor,node_modules,tests,build,dist,docs,.agents,.claude,.github
 
@@ -49,15 +53,26 @@ test: ## Ejecuta las pruebas de PHP
 test-js: ## Ejecuta las pruebas de JavaScript
 	npm run test:js
 
-plugin-check: start-if-not-running ## Pasa el Plugin Check oficial de WordPress
-	npx wp-env run --quiet cli wp plugin install plugin-check --activate --color
-	npx wp-env run --quiet cli wp plugin check $(DOMAIN) \
-		--exclude-directories=tests,node_modules,vendor \
-		--ignore-warnings --color
+plugin-check: start-if-not-running package ## Pasa el Plugin Check sobre el ZIP distribuible
+	npx wp-env run cli wp plugin install plugin-check --activate --color
+	@# Se comprueba el paquete que de verdad se instala, no el árbol de trabajo:
+	@# los ficheros de desarrollo no viajan en el ZIP y revisarlos daría errores
+	@# por cosas que nadie recibe nunca.
+	npx wp-env run cli sh -c 'set -e; \
+		cd wp-content/plugins; \
+		rm -rf $(DOMAIN)-dist; \
+		unzip -q $(DOMAIN)/dist/$(DOMAIN)-*.zip -d .pc-tmp; \
+		mv .pc-tmp/$(DOMAIN) $(DOMAIN)-dist; \
+		rm -rf .pc-tmp'
+	-npx wp-env run cli wp plugin check $(DOMAIN)-dist --slug=$(DOMAIN) --ignore-warnings --color
+	@npx wp-env run cli sh -c 'rm -rf wp-content/plugins/$(DOMAIN)-dist' > /dev/null
 
 pot: start-if-not-running ## Regenera el catálogo de cadenas (.pot)
-	npx wp-env run --quiet cli wp i18n make-pot . $(POT) \
-		--domain=$(DOMAIN) --exclude=$(I18N_EXCLUDE)
+	@# --skip-js: las cadenas visibles se definen en PHP y llegan al navegador
+	@# por wp_localize_script, así que no hay nada traducible en JavaScript. El
+	@# analizador de JS, además, agota la memoria con los bundles de build/.
+	npx wp-env run cli wp i18n make-pot $(PLUGIN_IN_CONTAINER) $(PLUGIN_IN_CONTAINER)/$(POT) \
+		--domain=$(DOMAIN) --exclude=$(I18N_EXCLUDE) --skip-js
 	@# La fecha de creación cambia en cada ejecución y ensuciaría el diff.
 	@sed -i.bak '/POT-Creation-Date:/d' $(POT) && rm $(POT).bak
 
