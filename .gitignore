@@ -5,6 +5,3 @@ site/
 vendor/
 .phpunit.result.cache
 .DS_Store
-
-# Los catálogos compilados se generan al empaquetar; solo se versionan los .po
-languages/*.mo

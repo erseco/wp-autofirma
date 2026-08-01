@@ -1,13 +1,6 @@
-.PHONY: build check check-docker check-untranslated clean down fix help lint mo package plugin-check po pot start start-if-not-running test test-js up
+.PHONY: build check check-docker clean down fix help lint package plugin-check start start-if-not-running test test-js up
 
 DOMAIN := wp-autofirma
-POT    := languages/$(DOMAIN).pot
-# `wp` se ejecuta con el directorio de trabajo en la raíz de WordPress, no en el
-# plugin: sin esta ruta escanearía la instalación entera y escribiría el
-# catálogo dentro del contenedor.
-PLUGIN_IN_CONTAINER := wp-content/plugins/$(DOMAIN)
-# Lo que no forma parte del plugin distribuido y no debe entrar en el catálogo.
-I18N_EXCLUDE := vendor,node_modules,tests,build,dist,docs,.agents,.claude,.github
 
 help: ## Muestra esta ayuda
 	@echo "Objetivos disponibles:"
@@ -66,40 +59,6 @@ plugin-check: start-if-not-running package ## Pasa el Plugin Check sobre el ZIP 
 		rm -rf .pc-tmp'
 	-npx wp-env run cli wp plugin check $(DOMAIN)-dist --slug=$(DOMAIN) --ignore-warnings --color
 	@npx wp-env run cli sh -c 'rm -rf wp-content/plugins/$(DOMAIN)-dist' > /dev/null
-
-pot: start-if-not-running ## Regenera el catálogo de cadenas (.pot)
-	@# --skip-js: las cadenas visibles se definen en PHP y llegan al navegador
-	@# por wp_localize_script, así que no hay nada traducible en JavaScript. El
-	@# analizador de JS, además, agota la memoria con los bundles de build/.
-	npx wp-env run cli wp i18n make-pot $(PLUGIN_IN_CONTAINER) $(PLUGIN_IN_CONTAINER)/$(POT) \
-		--domain=$(DOMAIN) --exclude=$(I18N_EXCLUDE) --skip-js
-	@# La fecha de creación cambia en cada ejecución y ensuciaría el diff.
-	@sed -i.bak '/POT-Creation-Date:/d' $(POT) && rm $(POT).bak
-
-po: ## Actualiza los .po existentes con las cadenas nuevas del .pot
-	@for po in languages/*.po; do \
-		[ -e "$$po" ] || { echo "No hay ningún .po todavía."; exit 0; }; \
-		echo "Actualizando $$po"; \
-		msgmerge --quiet --update --backup=none "$$po" $(POT); \
-	done
-
-mo: ## Compila los .po en .mo (no se versionan: se generan al empaquetar)
-	@for po in languages/*.po; do \
-		[ -e "$$po" ] || { echo "No hay ningún .po que compilar."; exit 0; }; \
-		echo "Compilando $$po"; \
-		msgfmt "$$po" -o "$${po%.po}.mo"; \
-	done
-
-check-untranslated: ## Falla si algún .po tiene cadenas sin traducir
-	@for po in languages/*.po; do \
-		[ -e "$$po" ] || exit 0; \
-		if [ "$$(msgattrib --untranslated "$$po" | wc -l)" -gt 0 ]; then \
-			echo "Hay cadenas sin traducir en $$po"; \
-			msgattrib --untranslated "$$po"; \
-			exit 1; \
-		fi; \
-	done
-	@echo "Todas las cadenas están traducidas."
 
 check: ## Ejecuta formato, linter, pruebas y construcción
 	composer check

@@ -10,13 +10,14 @@ if [[ "${version}" != "${header_version}" ]]; then
   exit 1
 fi
 
-# Los catálogos compilados no se versionan, así que se generan aquí: `git
-# archive` solo empaqueta lo commiteado y los dejaría fuera del ZIP.
-make mo
-
-rm -rf dist/wp-autofirma
-mkdir -p dist/wp-autofirma
-rsync -a --exclude-from=.distignore ./ dist/wp-autofirma/
-( cd dist && zip -qr "wp-autofirma-${version}.zip" wp-autofirma && rm -rf wp-autofirma )
+# Todo lo que se distribuye está versionado, así que `git archive` basta y
+# garantiza que el ZIP contiene exactamente lo commiteado. Las exclusiones
+# viven en .gitattributes como `export-ignore`.
+mkdir -p dist
+git archive \
+  --format=zip \
+  --prefix=wp-autofirma/ \
+  --output="dist/wp-autofirma-${version}.zip" \
+  HEAD
 
 printf 'Paquete creado: dist/wp-autofirma-%s.zip\n' "${version}"

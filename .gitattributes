@@ -25,3 +25,9 @@
 /scripts export-ignore
 /vitest.config.js export-ignore
 /zensical.toml export-ignore
+/.agents export-ignore
+/.claude export-ignore
+/CLAUDE.md export-ignore
+/dist export-ignore
+/.phpunit.result.cache export-ignore
+/coverage export-ignore
