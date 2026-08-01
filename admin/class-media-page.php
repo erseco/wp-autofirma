@@ -35,6 +35,13 @@ final class Media_Page {
             'wp-autofirma-sign',
             array( $this, 'render_page' )
         );
+
+        // La pantalla solo tiene sentido sobre un PDF concreto, así que se
+        // registra para que exista y respete la capacidad, pero se retira del
+        // menú: se llega desde la acción «Firmar con AutoFirma» del propio
+        // adjunto. Un elemento de menú suelto llevaría a una página sin
+        // documento que hacer nada con él.
+        remove_submenu_page( 'upload.php', 'wp-autofirma-sign' );
     }
 
     /**
