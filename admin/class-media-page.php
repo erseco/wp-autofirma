@@ -122,6 +122,8 @@ final class Media_Page {
                 'strings'      => array(
                     'cancelled'    => __( 'La operación se ha cancelado.', 'wp-autofirma' ),
                     'completed'    => __( 'El documento firmado se ha guardado como un adjunto nuevo.', 'wp-autofirma' ),
+                    'download'     => __( 'Descargar el PDF firmado', 'wp-autofirma' ),
+                    'edit'         => __( 'Abrir el adjunto en WordPress', 'wp-autofirma' ),
                     'loading'      => __( 'Cargando el documento…', 'wp-autofirma' ),
                     'saving'       => __( 'Guardando el documento firmado…', 'wp-autofirma' ),
                     'signing'      => __( 'Esperando a AutoFirma…', 'wp-autofirma' ),

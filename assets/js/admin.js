@@ -32,6 +32,28 @@ async function request(path, options = {}) {
 }
 
 /**
+ * Convierte el PDF firmado en un Blob descargable.
+ *
+ * El resultado ya está en el navegador, así que no hace falta ir a buscarlo a
+ * la URL del adjunto. En WordPress Playground esa URL ni siquiera resuelve: el
+ * sistema de ficheros es virtual y lo sirve un service worker, de modo que
+ * abrirla en otra pestaña devuelve una página de error en vez del documento.
+ *
+ * @param {string} base64 Documento firmado en Base64.
+ * @returns {Blob} Contenido binario del PDF.
+ */
+function toPdfBlob(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type: "application/pdf" });
+}
+
+/**
  * Firma el PDF con AutoFirma.
  *
  * @param {string} data Documento Base64.
@@ -81,12 +103,19 @@ async function handleSign() {
     result.hidden = false;
     result.replaceChildren();
 
-    const link = document.createElement("a");
-    link.href = saved.editUrl || saved.url;
-    link.textContent = saved.editUrl
-      ? "Editar el documento firmado"
-      : "Ver el documento firmado";
-    result.append(link);
+    const filename = createSignedFilename(documentData.filename);
+    const download = document.createElement("a");
+    download.href = URL.createObjectURL(toPdfBlob(signature));
+    download.download = filename;
+    download.textContent = settings.strings.download;
+    result.append(download);
+
+    if (saved.editUrl) {
+      const edit = document.createElement("a");
+      edit.href = saved.editUrl;
+      edit.textContent = settings.strings.edit;
+      result.append(" · ", edit);
+    }
   } catch (error) {
     status.textContent =
       error instanceof Error ? error.message : settings.strings.unknownError;

@@ -307,6 +307,14 @@ var WPAutoFirmaAdmin = (() => {
     }
     return payload;
   }
+  function toPdfBlob(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return new Blob([bytes], { type: "application/pdf" });
+  }
   async function sign(data) {
     const client = new AutoFirmaClient();
     client.initialize();
@@ -339,10 +347,18 @@ var WPAutoFirmaAdmin = (() => {
       status.textContent = settings.strings.completed;
       result.hidden = false;
       result.replaceChildren();
-      const link = document.createElement("a");
-      link.href = saved.editUrl || saved.url;
-      link.textContent = saved.editUrl ? "Editar el documento firmado" : "Ver el documento firmado";
-      result.append(link);
+      const filename = createSignedFilename(documentData.filename);
+      const download = document.createElement("a");
+      download.href = URL.createObjectURL(toPdfBlob(signature));
+      download.download = filename;
+      download.textContent = settings.strings.download;
+      result.append(download);
+      if (saved.editUrl) {
+        const edit = document.createElement("a");
+        edit.href = saved.editUrl;
+        edit.textContent = settings.strings.edit;
+        result.append(" \xB7 ", edit);
+      }
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : settings.strings.unknownError;
     } finally {

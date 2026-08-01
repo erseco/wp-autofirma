@@ -40,7 +40,7 @@ msgstr ""
 
 #: admin/class-media-page.php:32
 #: admin/class-media-page.php:63
-#: admin/class-media-page.php:145
+#: admin/class-media-page.php:146
 msgid "Firmar con AutoFirma"
 msgstr ""
 
@@ -48,47 +48,51 @@ msgstr ""
 msgid "AutoFirma"
 msgstr ""
 
-#: admin/class-media-page.php:124
+#: admin/class-media-page.php:123
 msgid "La operación se ha cancelado."
 msgstr ""
 
-#: admin/class-media-page.php:125
+#: admin/class-media-page.php:124
 msgid "El documento firmado se ha guardado como un adjunto nuevo."
 msgstr ""
 
+#: admin/class-media-page.php:125
+msgid "Descargar el PDF firmado"
+msgstr ""
+
 #: admin/class-media-page.php:126
-msgid "Cargando el documento…"
+msgid "Abrir el adjunto en WordPress"
 msgstr ""
 
 #: admin/class-media-page.php:127
-msgid "Guardando el documento firmado…"
+msgid "Cargando el documento…"
 msgstr ""
 
 #: admin/class-media-page.php:128
-msgid "Esperando a AutoFirma…"
+msgid "Guardando el documento firmado…"
 msgstr ""
 
 #: admin/class-media-page.php:129
+msgid "Esperando a AutoFirma…"
+msgstr ""
+
+#: admin/class-media-page.php:130
 msgid "No se pudo completar la firma."
 msgstr ""
 
-#: admin/class-media-page.php:150
+#: admin/class-media-page.php:151
 msgid "Selecciona un PDF en la biblioteca de medios y usa la acción «Firmar con AutoFirma»."
 msgstr ""
 
-#: admin/class-media-page.php:155
+#: admin/class-media-page.php:156
 msgid "Abrir la biblioteca de medios"
 msgstr ""
 
-#: admin/class-media-page.php:176
+#: admin/class-media-page.php:177
 msgid "El original no se sobrescribirá. El resultado se guardará como un adjunto nuevo."
 msgstr ""
 
-#: admin/class-media-page.php:182
-msgid "Modo de demostración: se simula el resultado para probar el flujo de WordPress; no se crea una firma electrónica."
-msgstr ""
-
-#: admin/class-media-page.php:192
+#: admin/class-media-page.php:186
 msgid "Firmar PDF"
 msgstr ""
 
