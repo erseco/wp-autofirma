@@ -31,6 +31,10 @@ librería adapta AutoScript; AutoFirma realiza la operación local.
 - `includes/class-signature-index.php`: caché en post meta de esa detección.
 - `includes/class-signature-presenter.php`: cómo se describe una firma.
 - `includes/class-shortcodes.php`: publicación en el frontal, con permisos.
+- `includes/class-intermediate-controller.php`: rutas del servidor intermedio y
+  emisión de los tokens que las autorizan.
+- `includes/class-transient-store.php`: almacenamiento en tránsito sobre
+  transients.
 - `admin/class-media-library.php`: columna y ficha de la biblioteca.
 - `assets/js/`: orquestación del navegador.
 - `@erseco/autofirma-client`: única capa que adapta AutoScript.
@@ -47,6 +51,10 @@ acompaña a todo lo que se muestre.
 - Mantén las comprobaciones `read_post` y `upload_files`.
 - Toda mutación REST requiere nonce de WordPress.
 - Conserva límites de tamaño y Base64 estricto.
+- Las rutas del servidor intermedio son públicas por necesidad: AutoFirma no
+  lleva la sesión de WordPress. Lo que autoriza es el token de la ruta. No
+  aceptes ni entregues datos sin sesión válida, y no reimplementes el protocolo:
+  vive en `erseco/autofirma-intermediate-server`.
 - No afirmes que la biblioteca de medios es privada.
 - La demostración de Playground firma de verdad con la AutoFirma de quien la
   usa. No introduzcas simulaciones que devuelvan el documento sin firmar: un

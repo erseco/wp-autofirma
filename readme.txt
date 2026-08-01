@@ -57,6 +57,12 @@ That the file contains a signature structure, and nothing more. A document
 modified after being signed still shows the mark. Use a specialised validation
 service to check whether a signature is actually valid.
 
+= Can documents be signed from a phone? =
+
+Yes. Mobile devices cannot reach AutoFirma over a local WebSocket, so the
+protocol relies on two intermediate HTTP services. The plugin provides them with
+no configuration required; the site must use pretty permalinks.
+
 = Which shortcodes are available? =
 
 `[autofirma_signature_status]` reports whether an attachment is signed,

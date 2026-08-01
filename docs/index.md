@@ -19,6 +19,8 @@ esa información donde haga falta:
 - [Detección de firmas](guia/firmas-detectadas.md): qué reconoce, qué no valida
   y cuánto cuesta.
 - [Shortcodes](guia/shortcodes.md): publicar el estado de firma en el sitio.
+- [Servidor intermedio](guia/servidor-intermedio.md): lo que permite firmar
+  desde el móvil.
 
 El proyecto es independiente y no oficial. No incluye AutoFirma, AutoScript ni
 validación criptográfica en servidor.

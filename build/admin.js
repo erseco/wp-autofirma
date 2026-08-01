@@ -315,8 +315,23 @@ var WPAutoFirmaAdmin = (() => {
     }
     return new Blob([bytes], { type: "application/pdf" });
   }
+  async function openIntermediateSession() {
+    if (!settings.intermediate) {
+      return {};
+    }
+    try {
+      const session = await request("/intermediate-sessions", { method: "POST" });
+      return {
+        storageUrl: session.storageUrl,
+        retrieveUrl: session.retrieveUrl
+      };
+    } catch (error) {
+      return {};
+    }
+  }
   async function sign(data) {
-    const client = new AutoFirmaClient();
+    const servlets = await openIntermediateSession();
+    const client = new AutoFirmaClient(servlets);
     client.initialize();
     const signed = await client.sign({
       data,
