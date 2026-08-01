@@ -121,11 +121,11 @@ final class Media_Page {
                 'nonce'        => wp_create_nonce( 'wp_rest' ),
                 'restUrl'      => esc_url_raw( rest_url( 'wp-autofirma/v1' ) ),
                 'strings'      => array(
-                    'cancelled'   => __( 'La operación se ha cancelado.', 'wp-autofirma' ),
-                    'completed'   => __( 'El documento firmado se ha guardado como un adjunto nuevo.', 'wp-autofirma' ),
-                    'loading'     => __( 'Cargando el documento…', 'wp-autofirma' ),
-                    'saving'      => __( 'Guardando el documento firmado…', 'wp-autofirma' ),
-                    'signing'     => __( 'Esperando a AutoFirma…', 'wp-autofirma' ),
+                    'cancelled'    => __( 'La operación se ha cancelado.', 'wp-autofirma' ),
+                    'completed'    => __( 'El documento firmado se ha guardado como un adjunto nuevo.', 'wp-autofirma' ),
+                    'loading'      => __( 'Cargando el documento…', 'wp-autofirma' ),
+                    'saving'       => __( 'Guardando el documento firmado…', 'wp-autofirma' ),
+                    'signing'      => __( 'Esperando a AutoFirma…', 'wp-autofirma' ),
                     'unknownError' => __( 'No se pudo completar la firma.', 'wp-autofirma' ),
                 ),
             )
@@ -204,7 +204,9 @@ final class Media_Page {
      * @return int
      */
     private function get_attachment_id() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Parámetro de navegación de solo lectura: elige qué adjunto mostrar, no muta nada. La mutación va por REST y sí exige nonce.
         $attachment_id = isset( $_GET['attachment_id'] )
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Ver arriba.
             ? absint( wp_unslash( $_GET['attachment_id'] ) )
             : 0;
 

@@ -41,6 +41,7 @@ final class Signature_Repository {
         $upload    = wp_upload_bits( $safe_name, null, $contents );
 
         if ( ! empty( $upload['error'] ) ) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Mensaje de excepción, no salida: el controlador REST lo serializa como JSON.
             throw new RuntimeException( (string) $upload['error'] );
         }
 
@@ -56,6 +57,7 @@ final class Signature_Repository {
         );
 
         if ( is_wp_error( $attachment_id ) ) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Mensaje de excepción, no salida: el controlador REST lo serializa como JSON.
             throw new RuntimeException( $attachment_id->get_error_message() );
         }
 

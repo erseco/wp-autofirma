@@ -23,6 +23,7 @@ final class Signature_Data {
      * @throws InvalidArgumentException Cuando los datos no son Base64 válido.
      */
     public static function decode( $encoded ) {
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decodifica la firma que devuelve AutoFirma, en modo estricto.
         $decoded = base64_decode( $encoded, true );
 
         if ( false === $decoded ) {

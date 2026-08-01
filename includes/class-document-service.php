@@ -43,6 +43,7 @@ final class Document_Service {
             throw new RuntimeException( 'El documento supera el tamaño permitido.' );
         }
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Ruta local del adjunto obtenida de WordPress, no una URL remota.
         $contents = file_get_contents( $path );
 
         if ( false === $contents ) {
@@ -51,6 +52,7 @@ final class Document_Service {
 
         return array(
             'attachmentId' => $attachment_id,
+            // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- El transporte de AutoScript es Base64; no se ofusca código.
             'data'         => base64_encode( $contents ),
             'filename'     => wp_basename( $path ),
             'mimeType'     => 'application/pdf',
