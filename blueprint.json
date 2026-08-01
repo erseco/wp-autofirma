@@ -7,7 +7,7 @@
   "siteOptions": {
     "blogname": "Demostración de WP AutoFirma"
   },
-  "landingPage": "/wp-admin/upload.php?page=wp-autofirma-sign",
+  "landingPage": "/wp-admin/upload.php?mode=list",
   "login": true,
   "features": {
     "networking": true
@@ -16,12 +16,6 @@
     {
       "step": "setSiteLanguage",
       "language": "es_ES"
-    },
-    {
-      "step": "defineWpConfigConsts",
-      "consts": {
-        "WP_AUTOFIRMA_DEMO_MODE": true
-      }
     },
     {
       "step": "installPlugin",
@@ -35,7 +29,7 @@
     },
     {
       "step": "runPHP",
-      "code": "<?php require_once '/wordpress/wp-load.php'; $data = base64_decode('JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiA+PiA+PiAvQ29udGVudHMgNCAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCAxMTcgPj4Kc3RyZWFtCkJUCi9GMSAxOCBUZgo3MiA3MjAgVGQKKEVqZW1wbG8gZGUgZmlybWEgUEFkRVMpIFRqCjAgLTI4IFRkCi9GMSAxMSBUZgooRGF0b3MgZmljdGljaW9zIHNpbiBlZmVjdG9zIGp1cmlkaWNvcy4pIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0MSAwMDAwMCBuIAowMDAwMDAwNDA4IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKNDc4CiUlRU9GCg==', true); $upload = wp_upload_bits('ejemplo-autofirma.pdf', null, $data); $id = wp_insert_attachment(array('post_mime_type' => 'application/pdf', 'post_title' => 'Ejemplo AutoFirma', 'post_status' => 'inherit'), $upload['file']); update_option('wp_autofirma_demo_attachment_id', $id); ?>"
+      "code": "<?php require_once '/wordpress/wp-load.php'; $data = base64_decode('JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiA+PiA+PiAvQ29udGVudHMgNCAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCAxMTcgPj4Kc3RyZWFtCkJUCi9GMSAxOCBUZgo3MiA3MjAgVGQKKEVqZW1wbG8gZGUgZmlybWEgUEFkRVMpIFRqCjAgLTI4IFRkCi9GMSAxMSBUZgooRGF0b3MgZmljdGljaW9zIHNpbiBlZmVjdG9zIGp1cmlkaWNvcy4pIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0MSAwMDAwMCBuIAowMDAwMDAwNDA4IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKNDc4CiUlRU9GCg==', true); $upload = wp_upload_bits('ejemplo-autofirma.pdf', null, $data); wp_insert_attachment(array('post_mime_type' => 'application/pdf', 'post_title' => 'Ejemplo AutoFirma', 'post_status' => 'inherit'), $upload['file']); ?>"
     }
   ]
 }

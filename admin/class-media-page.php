@@ -117,7 +117,6 @@ final class Media_Page {
             'wpAutoFirmaSettings',
             array(
                 'attachmentId' => $attachment_id,
-                'demoMode'     => $this->is_demo_mode(),
                 'nonce'        => wp_create_nonce( 'wp_rest' ),
                 'restUrl'      => esc_url_raw( rest_url( 'wp-autofirma/v1' ) ),
                 'strings'      => array(
@@ -176,13 +175,6 @@ final class Media_Page {
                 <?php esc_html_e( 'El original no se sobrescribirá. El resultado se guardará como un adjunto nuevo.', 'wp-autofirma' ); ?>
             </p>
 
-            <?php if ( $this->is_demo_mode() ) : ?>
-                <div class="notice notice-warning inline">
-                    <p>
-                        <?php esc_html_e( 'Modo de demostración: se simula el resultado para probar el flujo de WordPress; no se crea una firma electrónica.', 'wp-autofirma' ); ?>
-                    </p>
-                </div>
-            <?php endif; ?>
 
             <button
                 type="button"
@@ -210,10 +202,6 @@ final class Media_Page {
             ? absint( wp_unslash( $_GET['attachment_id'] ) )
             : 0;
 
-        if ( 0 === $attachment_id && $this->is_demo_mode() ) {
-            $attachment_id = (int) get_option( 'wp_autofirma_demo_attachment_id' );
-        }
-
         return $attachment_id;
     }
 
@@ -233,15 +221,5 @@ final class Media_Page {
          * @param string $url URL absoluta o vacía.
          */
         return esc_url_raw( (string) apply_filters( 'wp_autofirma_autoscript_url', $url ) );
-    }
-
-    /**
-     * Indica si la instalación se usa como simulación de Playground.
-     *
-     * @return bool
-     */
-    private function is_demo_mode() {
-        return defined( 'WP_AUTOFIRMA_DEMO_MODE' )
-            && true === WP_AUTOFIRMA_DEMO_MODE;
     }
 }

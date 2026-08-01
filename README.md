@@ -21,10 +21,9 @@ Versión inicial `0.1.0`. Implementa el flujo PAdES para PDF:
 
 [Abrir la demostración](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/erseco/wp-autofirma/main/blueprint.json)
 
-Playground usa un modo de simulación claramente indicado. Permite comprobar la
-UI, permisos, REST y creación del adjunto, pero **no produce una firma
-electrónica** porque el entorno web no incluye la aplicación de escritorio ni el
-AutoScript oficial.
+La demostración firma de verdad: necesita AutoFirma instalada y un certificado
+válido, y produce un PDF con firma electrónica auténtica. WordPress corre
+entero en tu navegador, así que el documento no sale de tu equipo.
 
 ## Instalación
 

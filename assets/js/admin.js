@@ -32,16 +32,12 @@ async function request(path, options = {}) {
 }
 
 /**
- * Firma el PDF real o simula el resultado dentro de Playground.
+ * Firma el PDF con AutoFirma.
  *
  * @param {string} data Documento Base64.
  * @returns {Promise<string>} PDF firmado en Base64.
  */
 async function sign(data) {
-  if (settings.demoMode) {
-    return data;
-  }
-
   // AutoScript se encola siempre desde el propio plugin, así que el objeto
   // global existe; si faltara, el constructor lanza AutoScriptUnavailableError.
   const client = new AutoFirmaClient();

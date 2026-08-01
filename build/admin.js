@@ -308,9 +308,6 @@ var WPAutoFirmaAdmin = (() => {
     return payload;
   }
   async function sign(data) {
-    if (settings.demoMode) {
-      return data;
-    }
     const client = new AutoFirmaClient();
     client.initialize();
     const signed = await client.sign({

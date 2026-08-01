@@ -38,8 +38,9 @@ confíes en metadatos de certificado enviados por JavaScript.
 - Toda mutación REST requiere nonce de WordPress.
 - Conserva límites de tamaño y Base64 estricto.
 - No afirmes que la biblioteca de medios es privada.
-- El modo `WP_AUTOFIRMA_DEMO_MODE` solo se usa en Playground y nunca genera una
-  firma real.
+- La demostración de Playground firma de verdad con la AutoFirma de quien la
+  usa. No introduzcas simulaciones que devuelvan el documento sin firmar: un
+  resultado que parece firmado sin serlo es peor que un error.
 - Los cambios de almacenamiento, permisos o API REST necesitan SDD y ADR.
 
 ## Pruebas
