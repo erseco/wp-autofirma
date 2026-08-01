@@ -34,6 +34,20 @@ Cuando eso ocurre el plugin **no anuncia** los servicios, porque ofrecer uno
 roto sería peor: AutoScript daría el trámite por incompatible en vez de
 limitarse a no encontrarlo.
 
+## Si instalas desde el repositorio
+
+El servicio necesita una librería que se instala con Composer. El paquete
+distribuible la lleva dentro, pero el ZIP del repositorio y los despliegues
+desde git no, porque `vendor/` no está versionado.
+
+En ese caso el plugin **funciona igual** y simplemente no ofrece el servidor
+intermedio: se firma desde el escritorio con normalidad. Para activarlo, ejecuta
+`composer install --no-dev` en el directorio del plugin.
+
+Es también lo que ocurre en WordPress Playground, donde de todos modos no podría
+usarse: el sitio vive dentro del navegador, servido por un service worker, y una
+aplicación nativa como AutoFirma no puede alcanzar esas direcciones.
+
 ## Cómo funciona
 
 1. Al pulsar firmar, el navegador pide una sesión. La petición va autenticada y

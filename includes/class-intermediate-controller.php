@@ -88,7 +88,12 @@ final class Intermediate_Controller {
      * @return bool
      */
     public static function is_available() {
-        $available = class_exists( IntermediateServer::class ) && '' !== self::base_url();
+        // Las dos clases van juntas: el protocolo viene de la librería y el
+        // almacén solo se carga si esa librería está. Comprobar ambas deja
+        // explícito que sin dependencias no hay servicio que ofrecer.
+        $available = class_exists( IntermediateServer::class )
+            && class_exists( Transient_Store::class )
+            && '' !== self::base_url();
 
         /**
          * Permite desactivar el servidor intermedio.

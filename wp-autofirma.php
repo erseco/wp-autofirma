@@ -41,8 +41,15 @@ require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-presenter.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-document-service.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-repository.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-rest-controller.php';
-require_once WP_AUTOFIRMA_PATH . 'includes/class-transient-store.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-intermediate-controller.php';
+
+// El almacén implementa una interfaz de la librería, de modo que sin ella la
+// clase no puede ni declararse: cargarla provocaría un error irrecuperable y el
+// plugin entero dejaría de funcionar. Solo se carga si la interfaz está.
+if ( interface_exists( 'Erseco\AutoFirma\IntermediateServer\Storage\StoreInterface' ) ) {
+    require_once WP_AUTOFIRMA_PATH . 'includes/class-transient-store.php';
+}
+
 require_once WP_AUTOFIRMA_PATH . 'includes/class-shortcodes.php';
 require_once WP_AUTOFIRMA_PATH . 'admin/class-media-page.php';
 require_once WP_AUTOFIRMA_PATH . 'admin/class-media-library.php';
