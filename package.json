@@ -20,8 +20,8 @@
     "@erseco/autofirma-client": "^1.9.3-canary.20260801091023.5ea9a84"
   },
   "devDependencies": {
-    "esbuild": "^0.25.5",
+    "esbuild": "^0.28.1",
     "prettier": "^3.6.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.10"
   }
 }
