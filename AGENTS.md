@@ -72,8 +72,20 @@ make check
 git diff --exit-code -- build
 ```
 
-- PHPUnit cubre lógica PHP pura; añade integración con WordPress cuando entren
-  contratos que no puedan probarse sin el entorno.
+Hay dos suites de PHP y conviene no confundirlas:
+
+- **Unitaria** (`tests/php`, `phpunit.xml.dist`): corre sin WordPress, en
+  cualquier sitio y en segundos. Ahí va la lógica pura.
+- **Integración** (`tests/integration`, `phpunit-integration.xml.dist`): corre
+  dentro del contenedor `tests-cli` de wp-env, con base de datos, hooks,
+  usuarios y API REST de verdad. Ahí van los contratos que no pueden
+  comprobarse sin el entorno: capacidades, visibilidad de adjuntos, rutas REST
+  y hooks de administración. Se lanzan con `make test-integration`.
+
+Para medir la cobertura de la suite de integración hace falta arrancar wp-env
+con `--xdebug=coverage`; los contenedores no traen instrumentación. `make
+coverage` lo hace por ti.
+
 - Vitest cubre utilidades JavaScript.
 - PHPCS debe terminar sin errores.
 - El build versionado debe coincidir con las fuentes.

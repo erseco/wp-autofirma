@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Pruebas de integración: necesitan WordPress cargado y se ejecutan dentro del
+    contenedor `tests-cli` de wp-env. Van en su propia configuración para que la
+    suite unitaria siga corriendo en cualquier sitio, sin Docker y en segundos.
+-->
+<phpunit
+    bootstrap="tests/integration/bootstrap.php"
+    backupGlobals="false"
+    colors="true"
+>
+    <coverage>
+        <include>
+            <directory suffix=".php">includes</directory>
+            <directory suffix=".php">admin</directory>
+        </include>
+    </coverage>
+
+    <testsuites>
+        <testsuite name="WP AutoFirma (integración)">
+            <directory suffix="Test.php">tests/integration</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

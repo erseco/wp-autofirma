@@ -184,10 +184,17 @@ final class Intermediate_Controller {
             self::payload_lifetime()
         );
 
+        // AutoScript manda los parámetros en el cuerpo, como formulario. Se le
+        // pasan también los que WordPress ya haya interpretado por su cuenta,
+        // para no depender de que el cuerpo crudo siga disponible: hay
+        // configuraciones que lo consumen antes de llegar aquí.
         $response = $server->handle(
             ProtocolRequest::fromRawHttp(
                 (string) $request->get_method(),
-                (array) $request->get_query_params(),
+                array_merge(
+                    (array) $request->get_query_params(),
+                    (array) $request->get_body_params()
+                ),
                 (string) $request->get_body()
             )
         );

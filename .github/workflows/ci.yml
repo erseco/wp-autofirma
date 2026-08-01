@@ -53,6 +53,49 @@ jobs:
           files: ./coverage.xml
           flags: php
 
+  integration:
+    name: Integración con WordPress
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      # Codecov se autentica con OIDC en lugar de con un token guardado como
+      # secreto. Sin este permiso no puede emitirse el identificador.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Autenticar en GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: printf '\n//npm.pkg.github.com/:_authToken=%s\n' "${NODE_AUTH_TOKEN}" >> "${NPM_CONFIG_USERCONFIG:-${HOME}/.npmrc}"
+      - run: npm ci
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+      # Las pruebas corren dentro del contenedor, que trae la suite oficial de
+      # WordPress. Xdebug en modo cobertura se pide al arrancar: los
+      # contenedores no lo llevan activado.
+      - name: Levantar wp-env
+        run: npx wp-env start --xdebug=coverage
+      - name: Ejecutar las pruebas de integración
+        run: |
+          npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-autofirma \
+            ./vendor/bin/phpunit --configuration=phpunit-integration.xml.dist \
+            --coverage-clover=coverage-integration.xml
+      - name: Publicar en Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          use_oidc: true
+          files: ./coverage-integration.xml
+          flags: php-integration
+
   javascript:
     name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest

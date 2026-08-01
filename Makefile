@@ -1,6 +1,7 @@
-.PHONY: build check check-docker clean down fix help lint package plugin-check start start-if-not-running test test-js up
+.PHONY: build check check-all check-docker clean coverage down fix help lint package plugin-check start start-if-not-running test test-integration test-js up
 
 DOMAIN := wp-autofirma
+IN_CONTAINER := wp-content/plugins/$(DOMAIN)
 
 help: ## Muestra esta ayuda
 	@echo "Objetivos disponibles:"
@@ -46,6 +47,21 @@ test: ## Ejecuta las pruebas de PHP
 test-js: ## Ejecuta las pruebas de JavaScript
 	npm run test:js
 
+# Las de integración necesitan WordPress de verdad, así que corren dentro del
+# contenedor `tests-cli` de wp-env: base de datos, hooks, usuarios y API REST.
+test-integration: start-if-not-running ## Ejecuta las pruebas de integración en wp-env
+	npx wp-env run tests-cli --env-cwd=$(IN_CONTAINER) \
+		./vendor/bin/phpunit --configuration=phpunit-integration.xml.dist --testdox
+
+# Xdebug en modo cobertura solo se activa aquí: instrumentar el entorno
+# habitual ralentizaría cada petición del día a día.
+coverage: check-docker ## Mide la cobertura de PHP, unitaria y de integración
+	composer coverage
+	npx wp-env start --xdebug=coverage
+	npx wp-env run tests-cli --env-cwd=$(IN_CONTAINER) \
+		./vendor/bin/phpunit --configuration=phpunit-integration.xml.dist \
+		--coverage-clover=coverage-integration.xml
+
 plugin-check: start-if-not-running package ## Pasa el Plugin Check sobre el ZIP distribuible
 	npx wp-env run cli wp plugin install plugin-check --activate --color
 	@# Se comprueba el paquete que de verdad se instala, no el árbol de trabajo:
@@ -63,6 +79,8 @@ plugin-check: start-if-not-running package ## Pasa el Plugin Check sobre el ZIP 
 check: ## Ejecuta formato, linter, pruebas y construcción
 	composer check
 	npm run check
+
+check-all: check test-integration ## Lo anterior más las pruebas de integración
 
 package: ## Crea el ZIP distribuible en dist/
 	npm run package
