@@ -25,7 +25,11 @@ updates:
       npm-development:
         dependency-type: development
 
-  # Herramientas PHP de calidad y pruebas: PHPCS, WPCS y PHPUnit.
+  # Herramientas PHP de calidad y pruebas: PHPCS, WPCS y PHPUnit. Con
+  # `composer.lock` versionado, estas actualizaciones llegan como PR revisable
+  # en vez de cambiar bajo los pies: una versión nueva de WPCS ya rompió la CI
+  # de este repositorio al retirar un sniff que `.phpcs.xml.dist` referenciaba.
+  # El `require.php` de composer.json mantiene las propuestas dentro de PHP 7.4.
   - package-ecosystem: composer
     directory: /
     schedule:
