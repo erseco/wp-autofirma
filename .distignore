@@ -24,3 +24,14 @@
 /phpunit.xml.dist
 /vitest.config.js
 /zensical.toml
+/languages/.gitkeep
+/languages/*.po
+/languages/*.pot
+/dist
+/.agents
+/.claude
+/.npmrc
+/CLAUDE.md
+/.distignore
+/.phpunit.result.cache
+/coverage
