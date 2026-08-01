@@ -26,11 +26,21 @@ librería adapta AutoScript; AutoFirma realiza la operación local.
 - `includes/class-document-service.php`: lectura del original.
 - `includes/class-signature-repository.php`: creación del adjunto firmado.
 - `includes/class-signature-data.php`: transformaciones puras.
+- `includes/class-signature-detector.php`: detección estructural de firmas, sin
+  WordPress y sin validar nada.
+- `includes/class-signature-index.php`: caché en post meta de esa detección.
+- `includes/class-signature-presenter.php`: cómo se describe una firma.
+- `includes/class-shortcodes.php`: publicación en el frontal, con permisos.
+- `admin/class-media-library.php`: columna y ficha de la biblioteca.
 - `assets/js/`: orquestación del navegador.
 - `@erseco/autofirma-client`: única capa que adapta AutoScript.
 
 No dupliques el wrapper en el plugin. No sobrescribas el adjunto original. No
 confíes en metadatos de certificado enviados por JavaScript.
+
+Detectar una firma no es validarla. No presentes nunca lo detectado como firma
+verificada: se dice «firmante declarado» y «fecha declarada», y la advertencia
+acompaña a todo lo que se muestre.
 
 ## Seguridad
 

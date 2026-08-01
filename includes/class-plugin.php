@@ -45,11 +45,22 @@ final class Plugin {
             $signature_repository
         );
         $media_page           = new Media_Page();
+        $signature_index      = new Signature_Index();
+        $media_library        = new Media_Library( $signature_index );
+        $shortcodes           = new Shortcodes( $signature_index );
 
         add_action( 'rest_api_init', array( $rest_controller, 'register_routes' ) );
         add_action( 'admin_menu', array( $media_page, 'register_page' ) );
         add_action( 'admin_enqueue_scripts', array( $media_page, 'enqueue_assets' ) );
         add_filter( 'media_row_actions', array( $media_page, 'add_media_action' ), 10, 2 );
+
+        add_action( 'add_attachment', array( $signature_index, 'scan_new_attachment' ) );
+        add_action( 'admin_enqueue_scripts', array( $media_library, 'enqueue_styles' ) );
+        add_filter( 'manage_media_columns', array( $media_library, 'add_column' ) );
+        add_action( 'manage_media_custom_column', array( $media_library, 'render_column' ), 10, 2 );
+        add_filter( 'attachment_fields_to_edit', array( $media_library, 'add_attachment_fields' ), 10, 2 );
+
+        $shortcodes->register();
     }
 
     /**

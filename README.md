@@ -61,6 +61,13 @@ add_filter(
 Abre Medios → Biblioteca, usa la vista de lista y pulsa «Firmar con AutoFirma»
 en un PDF. El plugin no sobrescribe el original.
 
+Esa misma vista marca con un ✅ los documentos que llevan firma digital, y la
+ficha del adjunto describe lo que la firma declara. Los
+[shortcodes](docs/guia/shortcodes.md) publican esa información en el sitio.
+
+Es detección, no validación: dice que hay firma, nunca que sea válida. Los
+detalles y sus límites están en la [guía de detección](docs/guia/firmas-detectadas.md).
+
 ## Seguridad y privacidad
 
 - Las rutas REST exigen sesión, nonce y capacidades.

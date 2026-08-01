@@ -27,10 +27,15 @@ define( 'WP_AUTOFIRMA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WP_AUTOFIRMA_URL', plugin_dir_url( __FILE__ ) );
 
 require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-data.php';
+require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-detector.php';
+require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-index.php';
+require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-presenter.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-document-service.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-repository.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-rest-controller.php';
+require_once WP_AUTOFIRMA_PATH . 'includes/class-shortcodes.php';
 require_once WP_AUTOFIRMA_PATH . 'admin/class-media-page.php';
+require_once WP_AUTOFIRMA_PATH . 'admin/class-media-library.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-plugin.php';
 
 Plugin::instance()->register();

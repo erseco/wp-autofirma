@@ -28,4 +28,14 @@
     <rule ref="Squiz.Commenting.FileComment">
         <exclude-pattern>tests/*</exclude-pattern>
     </rule>
+
+    <!-- Las pruebas corren sin WordPress cargado, así que no pueden usar sus
+         envoltorios del sistema de ficheros ni sus funciones de red: leen y
+         escriben con las de PHP a propósito. -->
+    <rule ref="WordPress.WP.AlternativeFunctions">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.PHP.DiscouragedPHPFunctions">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
 </ruleset>
