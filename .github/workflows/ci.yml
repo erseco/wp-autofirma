@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   php:
@@ -39,6 +40,14 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+      # El cliente se instala desde GitHub Packages, que exige autenticarse
+      # incluso para paquetes públicos. El salto de línea inicial es necesario:
+      # el .npmrc que puede haber dejado setup-node no termina en salto, y un
+      # append pegado a la última línea la corrompe.
+      - name: Autenticar en GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: printf '\n//npm.pkg.github.com/:_authToken=%s\n' "${NODE_AUTH_TOKEN}" >> "${NPM_CONFIG_USERCONFIG:-${HOME}/.npmrc}"
       - run: npm ci
       - run: npm run check
       - name: Comprobar bundle versionado

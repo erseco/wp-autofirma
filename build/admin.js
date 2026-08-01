@@ -24,10 +24,33 @@ var WPAutoFirmaAdmin = (() => {
   function fromNativeError(nativeType, nativeMessage) {
     const normalizedType = nativeType.toLowerCase();
     const normalizedMessage = nativeMessage.toLowerCase();
-    const cancelled = normalizedType.includes("cancel") || normalizedMessage.includes("cancel");
+    if (normalizedType.includes("cancel") || normalizedMessage.includes("cancel")) {
+      return new AutoFirmaError(
+        "La operaci\xF3n de firma fue cancelada.",
+        "USER_CANCELLED",
+        nativeType,
+        nativeMessage
+      );
+    }
+    if (normalizedType.includes("outofmemory")) {
+      return new AutoFirmaError(
+        "El fichero excede la memoria disponible de AutoFirma.",
+        "DATA_TOO_LARGE",
+        nativeType,
+        nativeMessage
+      );
+    }
+    if (normalizedType.includes("timeout")) {
+      return new AutoFirmaError(
+        "AutoFirma no respondi\xF3 a tiempo.",
+        "NATIVE_TIMEOUT",
+        nativeType,
+        nativeMessage
+      );
+    }
     return new AutoFirmaError(
-      cancelled ? "La operaci\xF3n de firma fue cancelada." : "AutoFirma no pudo completar la operaci\xF3n.",
-      cancelled ? "USER_CANCELLED" : "NATIVE_ERROR",
+      "AutoFirma no pudo completar la operaci\xF3n.",
+      "NATIVE_ERROR",
       nativeType,
       nativeMessage
     );
@@ -142,12 +165,7 @@ var WPAutoFirmaAdmin = (() => {
      */
     selectCertificate(parameters = {}) {
       if (!this.autoScript.selectCertificate) {
-        return Promise.reject(
-          new AutoFirmaError(
-            "Esta versi\xF3n de AutoScript no expone selectCertificate.",
-            "UNSUPPORTED_OPERATION"
-          )
-        );
+        return this.unsupported("selectCertificate");
       }
       return new Promise((resolve, reject) => {
         this.autoScript.selectCertificate?.(
@@ -156,6 +174,69 @@ var WPAutoFirmaAdmin = (() => {
           (type, message) => reject(fromNativeError(type, message))
         );
       });
+    }
+    /**
+     * Pide a AutoFirma que guarde datos en un fichero elegido por la persona
+     * usuaria.
+     */
+    saveDataToFile(options) {
+      const operation = this.autoScript.saveDataToFile;
+      if (!operation) {
+        return this.unsupported("saveDataToFile");
+      }
+      return new Promise((resolve, reject) => {
+        operation(
+          options.data,
+          options.title,
+          options.filename,
+          options.extension,
+          options.description,
+          () => resolve(),
+          (type, message) => reject(fromNativeError(type, message))
+        );
+      });
+    }
+    /**
+     * Comprueba la sincronía del reloj del equipo contra un servidor.
+     *
+     * AutoScript lo implementa con una petición XHR **síncrona** que bloquea el
+     * hilo principal (`xhr.open('GET', url, false)`) hasta obtener respuesta.
+     * Si no se indica `checkUrl`, la petición se envía contra
+     * `document.URL + '/' + Math.random()`: una URL inventada contra el propio
+     * origen de la página, un acceso de red no documentado en ningún otro sitio
+     * y que este método no evita ni controla, pese a que esta librería no hace
+     * ningún acceso de red propio.
+     *
+     * El único efecto observable de un desfase es un `alert()` nativo; AutoScript
+     * captura y silencia cualquier error (por ejemplo, que la petición falle).
+     * Por eso la promesa devuelta nunca informa del resultado de la
+     * comprobación: se resuelve siempre que la operación exista, haya o no
+     * desfase y haya o no error de red.
+     *
+     * Con `checkType: "CT_OBLIGATORY"` y un desfase detectado, AutoScript marca
+     * un estado interno (`severeTimeDelay`) que hace que su función de carga
+     * (`cargarAppAfirma`, a la que invoca `initialize()`) registre un aviso y
+     * retorne sin hacer nada la siguiente vez que se ejecute. El orden de
+     * llamadas importa y no está documentado: invocar
+     * `checkTime({ checkType: "CT_OBLIGATORY" })` antes de `initialize()` puede
+     * convertir `initialize()` en un no-op silencioso; invocarlo después de
+     * `initialize()` no afecta a una carga que ya se ha iniciado.
+     *
+     * Si no se indica `maxMillis`, se reenvía tal cual: AutoScript aplica
+     * entonces su propio valor por defecto (300000 ms, 5 minutos) en vez de uno
+     * impuesto aquí.
+     */
+    checkTime(options = {}) {
+      const operation = this.autoScript.checkTime;
+      if (!operation) {
+        return this.unsupported("checkTime");
+      }
+      operation(
+        options.checkType ?? "CT_RECOMMENDED",
+        options.maxMillis,
+        options.checkUrl
+      );
+      return Promise.resolve();
     }
     /**
      * Devuelve el objeto oficial para casos que el wrapper todavía no cubra.
@@ -168,14 +249,20 @@ var WPAutoFirmaAdmin = (() => {
      */
     executeRequired(name, operation, options) {
       if (!operation) {
-        return Promise.reject(
-          new AutoFirmaError(
-            `Esta versi\xF3n de AutoScript no expone ${name}.`,
-            "UNSUPPORTED_OPERATION"
-          )
-        );
+        return this.unsupported(name);
       }
       return this.execute(operation, options);
+    }
+    /**
+     * Rechazo homogéneo para operaciones ausentes en la versión fijada.
+     */
+    unsupported(name) {
+      return Promise.reject(
+        new AutoFirmaError(
+          `Esta versi\xF3n de AutoScript no expone ${name}.`,
+          "UNSUPPORTED_OPERATION"
+        )
+      );
     }
     /**
      * Normaliza datos y parámetros antes de delegar en AutoScript.
@@ -223,9 +310,6 @@ var WPAutoFirmaAdmin = (() => {
   async function sign(data) {
     if (settings.demoMode) {
       return data;
-    }
-    if (!settings.hasAutoScript) {
-      throw new Error(settings.strings.missing);
     }
     const client = new AutoFirmaClient();
     client.initialize();

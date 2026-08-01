@@ -77,20 +77,27 @@ final class Media_Page {
             return;
         }
 
-        $attachment_id = $this->get_attachment_id();
+        $attachment_id  = $this->get_attachment_id();
         $autoscript_url = $this->get_autoscript_url();
-        $dependencies   = array();
 
-        if ( '' !== $autoscript_url ) {
-            wp_enqueue_script(
-                'wp-autofirma-autoscript',
-                $autoscript_url,
-                array(),
-                '1.9',
-                true
-            );
-            $dependencies[] = 'wp-autofirma-autoscript';
+        // AutoScript viaja dentro del plugin: `@erseco/autofirma-client` lo
+        // incluye ya verificado por sha256 y la construcción lo copia a
+        // `build/`. El sitio puede seguir sirviendo su propia copia mediante la
+        // constante o el filtro, que tienen prioridad.
+        if ( '' === $autoscript_url ) {
+            $autoscript_url = WP_AUTOFIRMA_URL . 'build/autoscript.js';
         }
+
+        // No es un módulo: es un script clásico que declara su objeto global,
+        // así que se encola aparte y el bundle depende de él.
+        wp_enqueue_script(
+            'wp-autofirma-autoscript',
+            $autoscript_url,
+            array(),
+            WP_AUTOFIRMA_VERSION,
+            true
+        );
+        $dependencies = array( 'wp-autofirma-autoscript' );
 
         wp_enqueue_style(
             'wp-autofirma-admin',
@@ -111,14 +118,12 @@ final class Media_Page {
             array(
                 'attachmentId' => $attachment_id,
                 'demoMode'     => $this->is_demo_mode(),
-                'hasAutoScript' => '' !== $autoscript_url,
                 'nonce'        => wp_create_nonce( 'wp_rest' ),
                 'restUrl'      => esc_url_raw( rest_url( 'wp-autofirma/v1' ) ),
                 'strings'      => array(
                     'cancelled'   => __( 'La operación se ha cancelado.', 'wp-autofirma' ),
                     'completed'   => __( 'El documento firmado se ha guardado como un adjunto nuevo.', 'wp-autofirma' ),
                     'loading'     => __( 'Cargando el documento…', 'wp-autofirma' ),
-                    'missing'     => __( 'Configura la URL oficial de AutoScript antes de firmar.', 'wp-autofirma' ),
                     'saving'      => __( 'Guardando el documento firmado…', 'wp-autofirma' ),
                     'signing'     => __( 'Esperando a AutoFirma…', 'wp-autofirma' ),
                     'unknownError' => __( 'No se pudo completar la firma.', 'wp-autofirma' ),
@@ -177,19 +182,12 @@ final class Media_Page {
                         <?php esc_html_e( 'Modo de demostración: se simula el resultado para probar el flujo de WordPress; no se crea una firma electrónica.', 'wp-autofirma' ); ?>
                     </p>
                 </div>
-            <?php elseif ( '' === $this->get_autoscript_url() ) : ?>
-                <div class="notice notice-error inline">
-                    <p>
-                        <?php esc_html_e( 'AutoScript no está configurado. Consulta la documentación de instalación.', 'wp-autofirma' ); ?>
-                    </p>
-                </div>
             <?php endif; ?>
 
             <button
                 type="button"
                 class="button button-primary button-hero"
                 id="wp-autofirma-sign"
-                <?php disabled( ! $this->is_demo_mode() && '' === $this->get_autoscript_url() ); ?>
             >
                 <?php esc_html_e( 'Firmar PDF', 'wp-autofirma' ); ?>
             </button>

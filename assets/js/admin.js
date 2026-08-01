@@ -42,10 +42,8 @@ async function sign(data) {
     return data;
   }
 
-  if (!settings.hasAutoScript) {
-    throw new Error(settings.strings.missing);
-  }
-
+  // AutoScript se encola siempre desde el propio plugin, así que el objeto
+  // global existe; si faltara, el constructor lanza AutoScriptUnavailableError.
   const client = new AutoFirmaClient();
   client.initialize();
   const signed = await client.sign({

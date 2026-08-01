@@ -1,6 +1,12 @@
 # Instalación
 
-Instala el ZIP de una release y define la ubicación del AutoScript oficial:
+Instala el ZIP de una release. No hace falta configurar nada más: el plugin
+incluye `autoscript.js` en `build/autoscript.js`, aportado por el paquete
+`@erseco/autofirma-client`, que lo fija a un tag concreto del repositorio
+oficial y verifica su `sha256` antes de empaquetarlo.
+
+Si tu organización prefiere servir su propia copia, define la constante y tendrá
+prioridad sobre la incluida:
 
 ```php
 define(
@@ -9,9 +15,8 @@ define(
 );
 ```
 
-No enlaces directamente una URL de terceros sin revisar disponibilidad,
-integridad, licencia y política de actualización. Lo normal es servir una copia
-controlada desde la misma organización.
+En ese caso no enlaces una URL de terceros sin revisar disponibilidad,
+integridad, licencia y política de actualización.
 
 ## Requisitos
 

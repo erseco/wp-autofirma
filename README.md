@@ -30,9 +30,14 @@ AutoScript oficial.
 
 1. Descarga el ZIP de la última release.
 2. Instálalo desde Plugins → Añadir plugin → Subir plugin.
-3. Obtén `autoscript.js` desde el área oficial del Cliente @firma y sírvelo desde
-   tu infraestructura.
-4. Define su URL:
+
+No hay nada más que configurar. El plugin incluye `autoscript.js` en
+`build/autoscript.js`: lo aporta el paquete `@erseco/autofirma-client`, que lo
+distribuye fijado a un tag concreto del repositorio oficial y verificado por
+`sha256` antes de empaquetarse.
+
+Si prefieres servir tu propia copia —por política del sitio o para fijar otra
+versión— define la constante y tendrá prioridad sobre la incluida:
 
 ```php
 define(
