@@ -119,8 +119,9 @@ Los tags `v0.1.x` ejecutan tests PHP y JavaScript, PHPCS, generan
 
 ## Documentación
 
-La documentación Zensical se publica en
-<https://erseco.github.io/wp-autofirma/>.
+Está en [`docs/`](docs/README.md), en el propio repositorio: guías de
+instalación, uso y desarrollo, detección de firmas, shortcodes, servidor
+intermedio, seguridad, y los registros de arquitectura.
 
 ## Licencia
 
