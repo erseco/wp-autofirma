@@ -68,6 +68,26 @@ git diff --exit-code -- build
 - El ZIP no incluye tests, fuentes de documentación ni dependencias de
   desarrollo.
 
+## Skills
+
+Los procedimientos recurrentes viven como skills en `.agents/skills/`, la ruta
+que leen Codex y Grok Build. Claude Code y GitHub Copilot buscan en
+`.claude/skills/` y `.github/skills/`, que contienen **enlaces simbólicos** a
+esos mismos directorios, no copias. Al añadir una skill, créala en
+`.agents/skills/` y enlázala desde las otras dos; nunca dupliques el `SKILL.md`.
+
+Consulta la que corresponda antes de tocar hooks y UI de administración, la API
+REST, el `readme.txt` del directorio de plugins o el Blueprint de Playground.
+
+Las skills actuales son **de terceros** y se copian tal cual, por lo que están
+excluidas de Prettier: reformatearlas divergiría de su origen y complicaría
+actualizarlas.
+
+| Skill                                                                                 | Origen                                     |
+| ------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `wp-plugin-development`, `wp-rest-api`, `wp-plugin-directory-guidelines`, `blueprint` | `WordPress/agent-skills`, GPL-2.0-or-later |
+| `security-audit`                                                                      | `ateeducacion/wp-decker`                   |
+
 ## Documentación de arquitectura
 
 Consulta `docs/arquitectura/adr/records.md` y

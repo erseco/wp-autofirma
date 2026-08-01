@@ -5,3 +5,11 @@ node_modules
 package-lock.json
 vendor
 blueprint.json
+
+# Skills de terceros: se copian tal cual de su origen y reformatearlas
+# divergiría del upstream, complicando cualquier actualización futura.
+.agents/skills/security-audit
+.agents/skills/blueprint
+.agents/skills/wp-plugin-development
+.agents/skills/wp-plugin-directory-guidelines
+.agents/skills/wp-rest-api
