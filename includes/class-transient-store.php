@@ -51,8 +51,7 @@ final class Transient_Store implements StoreInterface {
      * @param int    $ttlSeconds Segundos de vida.
      * @return void
      */
-    // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- El nombre lo fija StoreInterface: cambiarlo rompería a quien llamase con argumentos con nombre.
-    public function put( string $identifier, string $payload, int $ttlSeconds ): void {
+    public function put( string $identifier, string $payload, int $ttlSeconds ): void { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- El nombre lo fija StoreInterface: cambiarlo rompería a quien llamase con argumentos con nombre.
         set_transient( $this->key( $identifier ), $payload, $ttlSeconds ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Ídem.
     }
 
