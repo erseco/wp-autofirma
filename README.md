@@ -1,5 +1,10 @@
 # WP AutoFirma
 
+[![CI](https://github.com/erseco/wp-autofirma/actions/workflows/ci.yml/badge.svg)](https://github.com/erseco/wp-autofirma/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/gh/erseco/wp-autofirma/graph/badge.svg)](https://codecov.io/gh/erseco/wp-autofirma)
+[![License](https://img.shields.io/github/license/erseco/wp-autofirma)](LICENSE)
+[![Playground](https://img.shields.io/badge/WordPress_Playground-probar-21759b)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/erseco/wp-autofirma/main/blueprint.json)
+
 Plugin de WordPress para firmar PDF de la biblioteca de medios mediante
 AutoScript y AutoFirma, guardando el resultado como un adjunto nuevo.
 
