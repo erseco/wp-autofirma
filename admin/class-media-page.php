@@ -126,6 +126,9 @@ final class Media_Page {
                 'attachmentId' => $attachment_id,
                 'nonce'        => wp_create_nonce( 'wp_rest' ),
                 'restUrl'      => esc_url_raw( rest_url( 'wp-autofirma/v1' ) ),
+                // En móvil no hay WebSocket local con AutoFirma, así que sin
+                // servidor intermedio la firma no puede completarse.
+                'intermediate' => Intermediate_Controller::is_available(),
                 'strings'      => array(
                     'cancelled'    => __( 'La operación se ha cancelado.', 'wp-autofirma' ),
                     'completed'    => __( 'El documento firmado se ha guardado como un adjunto nuevo.', 'wp-autofirma' ),

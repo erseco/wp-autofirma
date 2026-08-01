@@ -54,15 +54,45 @@ function toPdfBlob(base64) {
 }
 
 /**
+ * Abre una sesión del servidor intermedio.
+ *
+ * AutoScript solo usa estos servicios cuando no puede hablar por WebSocket con
+ * AutoFirma, que es siempre el caso en móvil. En escritorio los ignora, así que
+ * configurarlos no cambia nada de lo que ya funciona.
+ *
+ * Si la sesión no puede abrirse, se firma igual: en escritorio saldrá bien y en
+ * móvil AutoScript dará su propio aviso, que es más claro que interrumpir aquí.
+ *
+ * @returns {Promise<object>} Direcciones de los dos servicios, o vacío.
+ */
+async function openIntermediateSession() {
+  if (!settings.intermediate) {
+    return {};
+  }
+
+  try {
+    const session = await request("/intermediate-sessions", { method: "POST" });
+
+    return {
+      storageUrl: session.storageUrl,
+      retrieveUrl: session.retrieveUrl,
+    };
+  } catch (error) {
+    return {};
+  }
+}
+
+/**
  * Firma el PDF con AutoFirma.
  *
  * @param {string} data Documento Base64.
  * @returns {Promise<string>} PDF firmado en Base64.
  */
 async function sign(data) {
+  const servlets = await openIntermediateSession();
   // AutoScript se encola siempre desde el propio plugin, así que el objeto
   // global existe; si faltara, el constructor lanza AutoScriptUnavailableError.
-  const client = new AutoFirmaClient();
+  const client = new AutoFirmaClient(servlets);
   client.initialize();
   const signed = await client.sign({
     data,

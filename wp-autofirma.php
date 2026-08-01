@@ -26,6 +26,14 @@ define( 'WP_AUTOFIRMA_FILE', __FILE__ );
 define( 'WP_AUTOFIRMA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WP_AUTOFIRMA_URL', plugin_dir_url( __FILE__ ) );
 
+// Dependencias de Composer. El paquete distribuible las lleva dentro; en el
+// repositorio aparecen al ejecutar `composer install`. Si faltan, el plugin
+// sigue firmando: lo único que no podrá ofrecer es el servidor intermedio, y
+// `Intermediate_Controller::is_available()` lo comprueba antes de anunciarlo.
+if ( is_readable( WP_AUTOFIRMA_PATH . 'vendor/autoload.php' ) ) {
+    require_once WP_AUTOFIRMA_PATH . 'vendor/autoload.php';
+}
+
 require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-data.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-detector.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-index.php';
@@ -33,6 +41,8 @@ require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-presenter.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-document-service.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-repository.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-rest-controller.php';
+require_once WP_AUTOFIRMA_PATH . 'includes/class-transient-store.php';
+require_once WP_AUTOFIRMA_PATH . 'includes/class-intermediate-controller.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-shortcodes.php';
 require_once WP_AUTOFIRMA_PATH . 'admin/class-media-page.php';
 require_once WP_AUTOFIRMA_PATH . 'admin/class-media-library.php';

@@ -68,9 +68,20 @@ ficha del adjunto describe lo que la firma declara. Los
 Es detección, no validación: dice que hay firma, nunca que sea válida. Los
 detalles y sus límites están en la [guía de detección](docs/guia/firmas-detectadas.md).
 
+## Firma desde el móvil
+
+En un móvil no hay WebSocket local con AutoFirma, así que el protocolo necesita
+dos servicios HTTP intermedios. El plugin los publica y no hay nada que
+configurar, pero el sitio debe tener enlaces permanentes bonitos. Los detalles
+están en la [guía del servidor intermedio](docs/guia/servidor-intermedio.md).
+
 ## Seguridad y privacidad
 
-- Las rutas REST exigen sesión, nonce y capacidades.
+- Las rutas REST que leen o guardan documentos exigen sesión, nonce y
+  capacidades.
+- Las dos rutas del servidor intermedio son públicas porque AutoFirma no lleva
+  la sesión de WordPress. Las autoriza un token opaco y efímero que solo se
+  emite a quien ya ha entrado, y sin él no aceptan ni entregan nada.
 - Solo se admiten PDF y hay límites de tamaño configurables.
 - El plugin no añade telemetría.
 - El documento se procesa en el navegador y en AutoFirma, pero el resultado se

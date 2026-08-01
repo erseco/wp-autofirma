@@ -49,7 +49,11 @@ final class Plugin {
         $media_library        = new Media_Library( $signature_index );
         $shortcodes           = new Shortcodes( $signature_index );
 
+        $intermediate = new Intermediate_Controller();
+
         add_action( 'rest_api_init', array( $rest_controller, 'register_routes' ) );
+        add_action( 'rest_api_init', array( $intermediate, 'register_routes' ) );
+        add_filter( 'rest_pre_serve_request', array( $intermediate, 'serve_as_text' ), 10, 3 );
         add_action( 'admin_menu', array( $media_page, 'register_page' ) );
         add_action( 'admin_enqueue_scripts', array( $media_page, 'enqueue_assets' ) );
         add_filter( 'media_row_actions', array( $media_page, 'add_media_action' ), 10, 2 );
