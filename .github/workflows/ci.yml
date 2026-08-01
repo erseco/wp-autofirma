@@ -27,9 +27,43 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: composer check
 
+  coverage:
+    name: Cobertura de PHP
+    runs-on: ubuntu-latest
+    # La matriz corre sin instrumentar para no pagar su coste en cada versión:
+    # la cobertura se mide una vez y basta con una.
+    permissions:
+      contents: read
+      # Codecov se autentica con OIDC en lugar de con un token guardado como
+      # secreto. Sin este permiso no puede emitirse el identificador.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: pcov
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer coverage
+      - name: Publicar en Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          use_oidc: true
+          files: ./coverage.xml
+          flags: php
+
   javascript:
     name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Los permisos de trabajo sustituyen a los globales, así que hay que
+      # repetir el de paquetes: sin él no se puede instalar el cliente.
+      packages: read
+      # Codecov se autentica con OIDC en lugar de con un token guardado como
+      # secreto. Sin este permiso no puede emitirse el identificador.
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -50,6 +84,15 @@ jobs:
         run: printf '\n//npm.pkg.github.com/:_authToken=%s\n' "${NODE_AUTH_TOKEN}" >> "${NPM_CONFIG_USERCONFIG:-${HOME}/.npmrc}"
       - run: npm ci
       - run: npm run check
+      # La cobertura no depende de la versión de Node, así que se publica una
+      # sola vez en lugar de una por cada entrada de la matriz.
+      - name: Publicar en Codecov
+        if: matrix.node == 24
+        uses: codecov/codecov-action@v5
+        with:
+          use_oidc: true
+          files: ./coverage/lcov.info
+          flags: javascript
       - name: Comprobar bundle versionado
         run: git diff --exit-code -- build
       - name: Validar Blueprint

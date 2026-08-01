@@ -18,6 +18,7 @@
       "@phpcs",
       "@test"
     ],
+    "coverage": "phpunit --coverage-clover=coverage.xml",
     "fix": "phpcbf --standard=.phpcs.xml.dist",
     "phpcs": "phpcs --standard=.phpcs.xml.dist",
     "test": "phpunit"

@@ -4,6 +4,13 @@
     colors="true"
     failOnWarning="true"
 >
+    <coverage>
+        <include>
+            <directory suffix=".php">includes</directory>
+            <directory suffix=".php">admin</directory>
+        </include>
+    </coverage>
+
     <testsuites>
         <testsuite name="WP AutoFirma">
             <directory suffix="Test.php">tests/php</directory>

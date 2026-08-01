@@ -2,7 +2,7 @@
   "name": "wp-autofirma",
   "version": "0.1.0",
   "private": true,
-  "description": "Integraci\u00f3n de AutoFirma con la biblioteca de medios de WordPress",
+  "description": "Integración de AutoFirma con la biblioteca de medios de WordPress",
   "license": "GPL-2.0-or-later",
   "repository": {
     "type": "git",
@@ -14,12 +14,13 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "package": "bash scripts/package.sh",
-    "test:js": "vitest run"
+    "test:js": "vitest run --coverage"
   },
   "dependencies": {
     "@erseco/autofirma-client": "^1.9.3-canary.20260801091023.5ea9a84"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.10",
     "esbuild": "^0.28.1",
     "prettier": "^3.6.2",
     "vitest": "^4.1.10"
