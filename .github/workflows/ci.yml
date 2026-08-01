@@ -53,4 +53,6 @@ jobs:
       - name: Comprobar bundle versionado
         run: git diff --exit-code -- build
       - name: Validar Blueprint
-        run: node -e "JSON.parse(require('fs').readFileSync('blueprint.json'))"
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('blueprint.json'))"
+          node -e "JSON.parse(require('fs').readFileSync('blueprint-live.json'))"
