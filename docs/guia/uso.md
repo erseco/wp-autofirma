@@ -19,9 +19,10 @@ Una firma PAdES es válida aunque no se vea. El sello visible es una capa que
 AutoFirma dibuja encima del documento para que, al abrirlo, se lea quién firmó y
 cuándo.
 
-En la pantalla de firma, bajo «Sello visible en el PDF», puedes escribir el
-texto y elegir dónde aparece. **Si dejas el texto vacío se firma sin sello**, que
-es el comportamiento anterior.
+En la pantalla de firma hay un bloque «Sello visible» con una casilla. Mientras
+esté sin marcar se firma sin sello, que es el comportamiento anterior; al
+marcarla se habilitan los campos, que **vienen ya rellenos con un ejemplo
+utilizable**, de modo que puedes probarlo sin escribir nada.
 
 ### El texto
 

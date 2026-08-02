@@ -52,12 +52,15 @@ async function montar({
 
   document.body.innerHTML = `
     <button id="wp-autofirma-sign"></button>
-    <textarea id="wp-autofirma-layer2-text">${sello.text ?? ""}</textarea>
+    <input type="checkbox" id="wp-autofirma-watermark" ${sello.activo ? "checked" : ""} />
+    <fieldset id="wp-autofirma-watermark-fields" ${sello.activo ? "" : "disabled"}>
+    <textarea id="wp-autofirma-layer2-text">${sello.text ?? "Firmado por $$SUBJECTCN$$"}</textarea>
     <input id="wp-autofirma-page" value="${sello.page ?? "1"}" />
     <input id="wp-autofirma-left" value="${sello.left ?? "40"}" />
     <input id="wp-autofirma-bottom" value="${sello.bottom ?? "40"}" />
     <input id="wp-autofirma-right" value="${sello.right ?? "260"}" />
     <input id="wp-autofirma-top" value="${sello.top ?? "110"}" />
+    </fieldset>
     <p id="wp-autofirma-status"></p>
     <p id="wp-autofirma-result" hidden></p>
   `;
@@ -77,6 +80,7 @@ async function montar({
       signing: "Firmando",
       unknownError: "Error desconocido",
       incompleteWatermark: "Faltan coordenadas",
+      emptyWatermark: "Falta el texto",
     },
   };
 
@@ -265,8 +269,8 @@ describe("orquestación de la firma", () => {
     expect(resultado.querySelectorAll("a")).toHaveLength(1);
   });
 
-  it("firma sin sello cuando el texto está vacío", async () => {
-    const { boton } = await montar({ sello: { text: "" } });
+  it("firma sin sello mientras la casilla esté sin marcar", async () => {
+    const { boton } = await montar();
 
     boton.click();
     await esperar();
@@ -278,6 +282,7 @@ describe("orquestación de la firma", () => {
   it("manda el texto y el rectángulo con los nombres que espera AutoFirma", async () => {
     const { boton } = await montar({
       sello: {
+        activo: true,
         text: "Firmado por $$SUBJECTCN$$",
         page: "3",
         left: "10",
@@ -303,7 +308,7 @@ describe("orquestación de la firma", () => {
 
   it("avisa si falta una coordenada en vez de firmar sin sello", async () => {
     const { boton, estado } = await montar({
-      sello: { text: "Sello", right: "" },
+      sello: { activo: true, text: "Sello", right: "" },
     });
 
     boton.click();
@@ -311,5 +316,34 @@ describe("orquestación de la firma", () => {
 
     expect(sign).not.toHaveBeenCalled();
     expect(estado.textContent).toBe("Faltan coordenadas");
+  });
+
+  it("avisa si se marca el sello y se borra el texto", async () => {
+    const { boton, estado } = await montar({
+      sello: { activo: true, text: "" },
+    });
+
+    boton.click();
+    await esperar();
+
+    expect(sign).not.toHaveBeenCalled();
+    expect(estado.textContent).toBe("Falta el texto");
+  });
+
+  it("la casilla habilita y deshabilita el grupo de campos", async () => {
+    await montar();
+
+    const casilla = document.querySelector("#wp-autofirma-watermark");
+    const campos = document.querySelector("#wp-autofirma-watermark-fields");
+
+    expect(campos.disabled).toBe(true);
+
+    casilla.checked = true;
+    casilla.dispatchEvent(new Event("change"));
+    expect(campos.disabled).toBe(false);
+
+    casilla.checked = false;
+    casilla.dispatchEvent(new Event("change"));
+    expect(campos.disabled).toBe(true);
   });
 });

@@ -11,3 +11,13 @@
   font-weight: 600;
   margin-top: 1rem;
 }
+
+/* El grupo del sello se ve siempre, para saber qué se puede configurar, pero
+   se apaga hasta que se marca la casilla. */
+.wp-autofirma__watermark-fields[disabled] {
+  opacity: 0.5;
+}
+
+.wp-autofirma__watermark-fields label {
+  margin-right: 1em;
+}

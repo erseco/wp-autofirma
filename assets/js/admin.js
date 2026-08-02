@@ -106,11 +106,17 @@ function readNumber(id) {
  * @returns {object} Parámetros para AutoFirma, o vacío si no hay sello.
  */
 function watermarkParameters() {
+  const enabled = document.querySelector("#wp-autofirma-watermark");
+
+  if (!enabled || !enabled.checked) {
+    return {};
+  }
+
   const field = document.querySelector("#wp-autofirma-layer2-text");
   const text = field ? field.value.trim() : "";
 
   if (text === "") {
-    return {};
+    throw new Error(settings.strings.emptyWatermark);
   }
 
   const corners = {
@@ -205,3 +211,15 @@ async function handleSign() {
 }
 
 button?.addEventListener("click", handleSign);
+
+// La casilla habilita el grupo entero: los campos se ven siempre, para saber
+// qué se puede configurar antes de activarlo.
+const watermark = document.querySelector("#wp-autofirma-watermark");
+
+watermark?.addEventListener("change", () => {
+  const fields = document.querySelector("#wp-autofirma-watermark-fields");
+
+  if (fields) {
+    fields.disabled = !watermark.checked;
+  }
+});

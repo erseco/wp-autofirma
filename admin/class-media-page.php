@@ -132,6 +132,7 @@ final class Media_Page {
                 'strings'      => array(
                     'cancelled'           => __( 'La operación se ha cancelado.', 'wp-autofirma' ),
                     'incompleteWatermark' => __( 'Para el sello visible hacen falta las cuatro coordenadas.', 'wp-autofirma' ),
+                    'emptyWatermark'      => __( 'El sello visible necesita un texto.', 'wp-autofirma' ),
                     'completed'           => __( 'El documento firmado se ha guardado como un adjunto nuevo.', 'wp-autofirma' ),
                     'download'            => __( 'Descargar el PDF firmado', 'wp-autofirma' ),
                     'edit'                => __( 'Abrir el adjunto en WordPress', 'wp-autofirma' ),
@@ -216,53 +217,62 @@ final class Media_Page {
     private function render_visible_signature_fields() {
         $defaults = self::visible_signature_defaults();
         ?>
-        <details class="wp-autofirma__watermark">
-            <summary><?php esc_html_e( 'Sello visible en el PDF (opcional)', 'wp-autofirma' ); ?></summary>
+        <fieldset class="wp-autofirma__watermark">
+            <legend><?php esc_html_e( 'Sello visible', 'wp-autofirma' ); ?></legend>
+
+            <p>
+                <label for="wp-autofirma-watermark">
+                    <input type="checkbox" id="wp-autofirma-watermark" />
+                    <?php esc_html_e( 'Dibujar un sello visible sobre el PDF', 'wp-autofirma' ); ?>
+                </label>
+            </p>
 
             <p class="description">
-                <?php esc_html_e( 'Deja el texto vacío para firmar sin sello. La firma es igual de válida: el sello solo la hace visible al abrir el documento.', 'wp-autofirma' ); ?>
+                <?php esc_html_e( 'La firma es igual de válida sin él: el sello solo la hace visible al abrir el documento.', 'wp-autofirma' ); ?>
             </p>
 
-            <p>
-                <label for="wp-autofirma-layer2-text">
-                    <?php esc_html_e( 'Texto', 'wp-autofirma' ); ?>
-                </label>
-                <textarea id="wp-autofirma-layer2-text" class="large-text code" rows="2"
-                    placeholder="<?php echo esc_attr( $defaults['text'] ); ?>"></textarea>
-                <span class="description">
-                    <?php
-                    printf(
-                        /* translators: %s: lista de variables admitidas. */
-                        esc_html__( 'Admite variables que AutoFirma sustituye al firmar: %s. En la fecha, PATTERN es un formato de Java, por ejemplo dd/MM/yyyy HH:mm.', 'wp-autofirma' ),
-                        '<code>' . implode( '</code>, <code>', array_map( 'esc_html', self::text_placeholders() ) ) . '</code>'
-                    );
-                    ?>
-                </span>
-            </p>
-
-            <p>
-                <label for="wp-autofirma-page"><?php esc_html_e( 'Página', 'wp-autofirma' ); ?></label>
-                <input type="number" id="wp-autofirma-page" min="1" step="1"
-                    value="<?php echo esc_attr( (string) $defaults['page'] ); ?>" class="small-text" />
-            </p>
-
-            <fieldset>
-                <legend class="screen-reader-text"><?php esc_html_e( 'Coordenadas del sello', 'wp-autofirma' ); ?></legend>
-                <?php
-                foreach ( self::coordinate_fields() as $key => $label ) :
-                    ?>
-                    <label for="wp-autofirma-<?php echo esc_attr( $key ); ?>">
-                        <?php echo esc_html( $label ); ?>
-                        <input type="number" step="1" class="small-text"
-                            id="wp-autofirma-<?php echo esc_attr( $key ); ?>"
-                            value="<?php echo esc_attr( (string) $defaults[ $key ] ); ?>" />
+            <?php // Un `fieldset` deshabilitado apaga todo lo que contiene, sin recorrer campo por campo. ?>
+            <fieldset id="wp-autofirma-watermark-fields" class="wp-autofirma__watermark-fields" disabled>
+                <p>
+                    <label for="wp-autofirma-layer2-text">
+                        <?php esc_html_e( 'Texto', 'wp-autofirma' ); ?>
                     </label>
-                <?php endforeach; ?>
-                <span class="description">
+                    <textarea id="wp-autofirma-layer2-text" class="large-text code" rows="2"><?php echo esc_textarea( $defaults['text'] ); ?></textarea>
+                    <span class="description">
+                        <?php
+                        printf(
+                            /* translators: %s: lista de variables admitidas. */
+                            esc_html__( 'Admite variables que AutoFirma sustituye al firmar: %s. En la fecha, PATTERN es un formato de Java, por ejemplo dd/MM/yyyy HH:mm.', 'wp-autofirma' ),
+                            '<code>' . implode( '</code>, <code>', array_map( 'esc_html', self::text_placeholders() ) ) . '</code>'
+                        );
+                        ?>
+                    </span>
+                </p>
+
+                <p>
+                    <label for="wp-autofirma-page"><?php esc_html_e( 'Página', 'wp-autofirma' ); ?></label>
+                    <input type="number" id="wp-autofirma-page" min="1" step="1"
+                        value="<?php echo esc_attr( (string) $defaults['page'] ); ?>" class="small-text" />
+                </p>
+
+                <p>
+                    <?php
+                    foreach ( self::coordinate_fields() as $key => $label ) :
+                        ?>
+                        <label for="wp-autofirma-<?php echo esc_attr( $key ); ?>">
+                            <?php echo esc_html( $label ); ?>
+                            <input type="number" step="1" class="small-text"
+                                id="wp-autofirma-<?php echo esc_attr( $key ); ?>"
+                                value="<?php echo esc_attr( (string) $defaults[ $key ] ); ?>" />
+                        </label>
+                    <?php endforeach; ?>
+                </p>
+
+                <p class="description">
                     <?php esc_html_e( 'En puntos PDF desde la esquina inferior izquierda: 72 puntos equivalen a una pulgada, y un A4 mide 595 × 842.', 'wp-autofirma' ); ?>
-                </span>
+                </p>
             </fieldset>
-        </details>
+        </fieldset>
         <?php
     }
 

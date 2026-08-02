@@ -338,10 +338,14 @@ var WPAutoFirmaAdmin = (() => {
     return Number.isFinite(value) ? value : null;
   }
   function watermarkParameters() {
+    const enabled = document.querySelector("#wp-autofirma-watermark");
+    if (!enabled || !enabled.checked) {
+      return {};
+    }
     const field = document.querySelector("#wp-autofirma-layer2-text");
     const text = field ? field.value.trim() : "";
     if (text === "") {
-      return {};
+      throw new Error(settings.strings.emptyWatermark);
     }
     const corners = {
       signaturePositionOnPageLowerLeftX: readNumber("wp-autofirma-left"),
@@ -410,5 +414,12 @@ var WPAutoFirmaAdmin = (() => {
     }
   }
   button?.addEventListener("click", handleSign);
+  var watermark = document.querySelector("#wp-autofirma-watermark");
+  watermark?.addEventListener("change", () => {
+    const fields = document.querySelector("#wp-autofirma-watermark-fields");
+    if (fields) {
+      fields.disabled = !watermark.checked;
+    }
+  });
 })();
 //# sourceMappingURL=admin.js.map

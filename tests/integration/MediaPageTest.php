@@ -120,6 +120,12 @@ class MediaPageTest extends WP_UnitTestCase {
         }
 
         $this->assertStringContainsString( '$$SUBJECTCN$$', $output );
+        // El texto llega escrito, no como sugerencia: así se puede probar el
+        // sello sin teclear nada.
+        $this->assertStringContainsString( 'rows="2">Firmado por $$SUBJECTCN$$', $output );
+        // Y el grupo nace apagado hasta que se marca la casilla.
+        $this->assertStringContainsString( 'id="wp-autofirma-watermark"', $output );
+        $this->assertMatchesRegularExpression( '/id="wp-autofirma-watermark-fields"[^>]*disabled/', $output );
     }
 
     /**
