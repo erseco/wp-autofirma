@@ -55,11 +55,14 @@ var WPAutoFirmaAdmin = (() => {
       nativeMessage
     );
   }
+  function isAutoScriptApi(candidate) {
+    return typeof candidate === "object" && candidate !== null && typeof candidate.sign === "function";
+  }
   function resolveAutoScript(injected) {
     if (injected) {
       return injected;
     }
-    if (typeof window !== "undefined" && window.AutoScript) {
+    if (typeof window !== "undefined" && isAutoScriptApi(window.AutoScript)) {
       return window.AutoScript;
     }
     throw new AutoScriptUnavailableError();
@@ -329,16 +332,42 @@ var WPAutoFirmaAdmin = (() => {
       return {};
     }
   }
+  function readNumber(id) {
+    const field = document.querySelector(`#${id}`);
+    const value = field ? Number.parseInt(field.value, 10) : Number.NaN;
+    return Number.isFinite(value) ? value : null;
+  }
+  function watermarkParameters() {
+    const field = document.querySelector("#wp-autofirma-layer2-text");
+    const text = field ? field.value.trim() : "";
+    if (text === "") {
+      return {};
+    }
+    const corners = {
+      signaturePositionOnPageLowerLeftX: readNumber("wp-autofirma-left"),
+      signaturePositionOnPageLowerLeftY: readNumber("wp-autofirma-bottom"),
+      signaturePositionOnPageUpperRightX: readNumber("wp-autofirma-right"),
+      signaturePositionOnPageUpperRightY: readNumber("wp-autofirma-top")
+    };
+    if (Object.values(corners).some((value) => value === null)) {
+      throw new Error(settings.strings.incompleteWatermark);
+    }
+    const page = readNumber("wp-autofirma-page");
+    return {
+      layer2Text: text,
+      signaturePage: page === null ? 1 : page,
+      ...corners
+    };
+  }
   async function sign(data) {
+    const parameters = { mode: "implicit", ...watermarkParameters() };
     const servlets = await openIntermediateSession();
     const client = new AutoFirmaClient(servlets);
     client.initialize();
     const signed = await client.sign({
       data,
       format: "PAdES",
-      parameters: {
-        mode: "implicit"
-      }
+      parameters
     });
     return signed.signature;
   }

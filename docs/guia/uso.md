@@ -12,3 +12,59 @@ metadatos que relacionan ambos adjuntos.
 
 La primera versión solo admite PAdES sobre PDF y limita el original a 10 MiB y
 el resultado a 15 MiB. Ambos límites tienen filtros.
+
+## Sello visible en el PDF
+
+Una firma PAdES es válida aunque no se vea. El sello visible es una capa que
+AutoFirma dibuja encima del documento para que, al abrirlo, se lea quién firmó y
+cuándo.
+
+En la pantalla de firma, bajo «Sello visible en el PDF», puedes escribir el
+texto y elegir dónde aparece. **Si dejas el texto vacío se firma sin sello**, que
+es el comportamiento anterior.
+
+### El texto
+
+Admite variables que AutoFirma sustituye en el momento de firmar, tomadas de su
+ayuda oficial:
+
+| Variable               | Se sustituye por                       |
+| ---------------------- | -------------------------------------- |
+| `$$SUBJECTCN$$`        | Nombre del titular del certificado     |
+| `$$ISSUERCN$$`         | Autoridad que lo emitió                |
+| `$$CERTSERIAL$$`       | Número de serie del certificado        |
+| `$$SIGNDATE=PATTERN$$` | Fecha de la firma, con formato de Java |
+| `$$ORGANIZATION$$`     | Organización del certificado           |
+| `$$OU$$`               | Unidad organizativa                    |
+| `$$SURNAME$$`          | Apellidos                              |
+| `$$TITLE$$`            | Cargo                                  |
+| `$$REASON$$`           | Motivo de la firma                     |
+| `$$LOCATION$$`         | Lugar                                  |
+| `$$CONTACT$$`          | Contacto                               |
+
+En `$$SIGNDATE=PATTERN$$`, `PATTERN` es un formato de fecha de Java:
+`$$SIGNDATE=dd/MM/yyyy HH:mm$$` produce «02/08/2026 19:30».
+
+### Las coordenadas
+
+El sello necesita un rectángulo donde dibujarse, y **sin las cuatro coordenadas
+no se dibuja nada**: por eso el plugin avisa en lugar de firmar sin sello.
+
+Van en puntos PDF desde la **esquina inferior izquierda** de la página: 72
+puntos equivalen a una pulgada y un A4 mide 595 × 842. Los valores iniciales
+—de (40, 40) a (260, 110)— dejan el sello abajo a la izquierda de la primera
+página.
+
+Para cambiar los valores de partida de todo el sitio:
+
+```php
+add_filter(
+    'wp_autofirma_visible_signature_defaults',
+    static function ( $defaults ) {
+        $defaults['text'] = 'Registrado por $$SUBJECTCN$$';
+        $defaults['page'] = 1;
+
+        return $defaults;
+    }
+);
+```

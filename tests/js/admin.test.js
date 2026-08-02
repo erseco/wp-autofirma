@@ -37,7 +37,11 @@ let construidoCon = [];
  * @param {object} opciones Ajustes de la prueba.
  * @returns {Promise<object>} Elementos del DOM y espías.
  */
-async function montar({ intermediate = false, respuestas = {} } = {}) {
+async function montar({
+  intermediate = false,
+  respuestas = {},
+  sello = {},
+} = {}) {
   vi.resetModules();
   construidoCon = [];
   sign.mockReset();
@@ -48,6 +52,12 @@ async function montar({ intermediate = false, respuestas = {} } = {}) {
 
   document.body.innerHTML = `
     <button id="wp-autofirma-sign"></button>
+    <textarea id="wp-autofirma-layer2-text">${sello.text ?? ""}</textarea>
+    <input id="wp-autofirma-page" value="${sello.page ?? "1"}" />
+    <input id="wp-autofirma-left" value="${sello.left ?? "40"}" />
+    <input id="wp-autofirma-bottom" value="${sello.bottom ?? "40"}" />
+    <input id="wp-autofirma-right" value="${sello.right ?? "260"}" />
+    <input id="wp-autofirma-top" value="${sello.top ?? "110"}" />
     <p id="wp-autofirma-status"></p>
     <p id="wp-autofirma-result" hidden></p>
   `;
@@ -66,6 +76,7 @@ async function montar({ intermediate = false, respuestas = {} } = {}) {
       saving: "Guardando",
       signing: "Firmando",
       unknownError: "Error desconocido",
+      incompleteWatermark: "Faltan coordenadas",
     },
   };
 
@@ -252,5 +263,53 @@ describe("orquestación de la firma", () => {
     await esperar();
 
     expect(resultado.querySelectorAll("a")).toHaveLength(1);
+  });
+
+  it("firma sin sello cuando el texto está vacío", async () => {
+    const { boton } = await montar({ sello: { text: "" } });
+
+    boton.click();
+    await esperar();
+
+    const parametros = sign.mock.calls[0][0].parameters;
+    expect(parametros).toEqual({ mode: "implicit" });
+  });
+
+  it("manda el texto y el rectángulo con los nombres que espera AutoFirma", async () => {
+    const { boton } = await montar({
+      sello: {
+        text: "Firmado por $$SUBJECTCN$$",
+        page: "3",
+        left: "10",
+        bottom: "20",
+        right: "300",
+        top: "120",
+      },
+    });
+
+    boton.click();
+    await esperar();
+
+    expect(sign.mock.calls[0][0].parameters).toEqual({
+      mode: "implicit",
+      layer2Text: "Firmado por $$SUBJECTCN$$",
+      signaturePage: 3,
+      signaturePositionOnPageLowerLeftX: 10,
+      signaturePositionOnPageLowerLeftY: 20,
+      signaturePositionOnPageUpperRightX: 300,
+      signaturePositionOnPageUpperRightY: 120,
+    });
+  });
+
+  it("avisa si falta una coordenada en vez de firmar sin sello", async () => {
+    const { boton, estado } = await montar({
+      sello: { text: "Sello", right: "" },
+    });
+
+    boton.click();
+    await esperar();
+
+    expect(sign).not.toHaveBeenCalled();
+    expect(estado.textContent).toBe("Faltan coordenadas");
   });
 });

@@ -106,6 +106,48 @@ class MediaPageTest extends WP_UnitTestCase {
     }
 
     /**
+     * La tarjeta ofrece los controles del sello visible.
+     */
+    public function test_visible_signature_fields_are_offered() {
+        $_GET['attachment_id'] = (string) $this->attachment_id;
+
+        ob_start();
+        $this->page->render_page();
+        $output = ob_get_clean();
+
+        foreach ( array( 'layer2-text', 'page', 'left', 'bottom', 'right', 'top' ) as $campo ) {
+            $this->assertStringContainsString( 'wp-autofirma-' . $campo, $output );
+        }
+
+        $this->assertStringContainsString( '$$SUBJECTCN$$', $output );
+    }
+
+    /**
+     * Los valores iniciales del sello se pueden filtrar.
+     */
+    public function test_visible_signature_defaults_can_be_filtered() {
+        add_filter( 'wp_autofirma_visible_signature_defaults', array( $this, 'own_defaults' ) );
+
+        $defaults = Media_Page::visible_signature_defaults();
+
+        remove_filter( 'wp_autofirma_visible_signature_defaults', array( $this, 'own_defaults' ) );
+
+        $this->assertSame( 7, $defaults['page'] );
+    }
+
+    /**
+     * Devuelve unos valores propios para la prueba anterior.
+     *
+     * @param array $defaults Valores originales.
+     * @return array
+     */
+    public function own_defaults( $defaults ) {
+        $defaults['page'] = 7;
+
+        return $defaults;
+    }
+
+    /**
      * Un adjunto que no es PDF no ofrece el botón.
      */
     public function test_a_non_pdf_does_not_offer_the_button() {

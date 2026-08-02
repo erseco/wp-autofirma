@@ -83,12 +83,64 @@ async function openIntermediateSession() {
 }
 
 /**
+ * Lee un número de un campo del formulario.
+ *
+ * @param {string} id Identificador del campo.
+ * @returns {number|null} Valor, o null si no hay campo o no es un número.
+ */
+function readNumber(id) {
+  const field = document.querySelector(`#${id}`);
+  const value = field ? Number.parseInt(field.value, 10) : Number.NaN;
+
+  return Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Construye los parámetros del sello visible.
+ *
+ * Los nombres son los que espera AutoFirma, tomados de `PdfExtraParams` en el
+ * código oficial. Una firma PAdES es invisible salvo que se le dé el rectángulo
+ * donde dibujarse, así que sin las cuatro coordenadas no se manda nada: mandar
+ * el texto solo produciría una firma sin sello y la impresión de que falla.
+ *
+ * @returns {object} Parámetros para AutoFirma, o vacío si no hay sello.
+ */
+function watermarkParameters() {
+  const field = document.querySelector("#wp-autofirma-layer2-text");
+  const text = field ? field.value.trim() : "";
+
+  if (text === "") {
+    return {};
+  }
+
+  const corners = {
+    signaturePositionOnPageLowerLeftX: readNumber("wp-autofirma-left"),
+    signaturePositionOnPageLowerLeftY: readNumber("wp-autofirma-bottom"),
+    signaturePositionOnPageUpperRightX: readNumber("wp-autofirma-right"),
+    signaturePositionOnPageUpperRightY: readNumber("wp-autofirma-top"),
+  };
+
+  if (Object.values(corners).some((value) => value === null)) {
+    throw new Error(settings.strings.incompleteWatermark);
+  }
+
+  const page = readNumber("wp-autofirma-page");
+
+  return {
+    layer2Text: text,
+    signaturePage: page === null ? 1 : page,
+    ...corners,
+  };
+}
+
+/**
  * Firma el PDF con AutoFirma.
  *
  * @param {string} data Documento Base64.
  * @returns {Promise<string>} PDF firmado en Base64.
  */
 async function sign(data) {
+  const parameters = { mode: "implicit", ...watermarkParameters() };
   const servlets = await openIntermediateSession();
   // AutoScript se encola siempre desde el propio plugin, así que el objeto
   // global existe; si faltara, el constructor lanza AutoScriptUnavailableError.
@@ -97,9 +149,7 @@ async function sign(data) {
   const signed = await client.sign({
     data,
     format: "PAdES",
-    parameters: {
-      mode: "implicit",
-    },
+    parameters,
   });
 
   return signed.signature;

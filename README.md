@@ -73,6 +73,10 @@ ficha del adjunto describe lo que la firma declara. Los
 Es detección, no validación: dice que hay firma, nunca que sea válida. Los
 detalles y sus límites están en la [guía de detección](docs/guia/firmas-detectadas.md).
 
+Al firmar puedes añadir un **sello visible**: un texto —con variables que
+AutoFirma sustituye, como el titular del certificado o la fecha— dibujado en las
+coordenadas que elijas. Está descrito en la [guía de uso](docs/guia/uso.md).
+
 ## Firma desde el móvil
 
 En un móvil no hay WebSocket local con AutoFirma, así que el protocolo necesita

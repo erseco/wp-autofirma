@@ -130,14 +130,15 @@ final class Media_Page {
                 // servidor intermedio la firma no puede completarse.
                 'intermediate' => Intermediate_Controller::is_available(),
                 'strings'      => array(
-                    'cancelled'    => __( 'La operación se ha cancelado.', 'wp-autofirma' ),
-                    'completed'    => __( 'El documento firmado se ha guardado como un adjunto nuevo.', 'wp-autofirma' ),
-                    'download'     => __( 'Descargar el PDF firmado', 'wp-autofirma' ),
-                    'edit'         => __( 'Abrir el adjunto en WordPress', 'wp-autofirma' ),
-                    'loading'      => __( 'Cargando el documento…', 'wp-autofirma' ),
-                    'saving'       => __( 'Guardando el documento firmado…', 'wp-autofirma' ),
-                    'signing'      => __( 'Esperando a AutoFirma…', 'wp-autofirma' ),
-                    'unknownError' => __( 'No se pudo completar la firma.', 'wp-autofirma' ),
+                    'cancelled'           => __( 'La operación se ha cancelado.', 'wp-autofirma' ),
+                    'incompleteWatermark' => __( 'Para el sello visible hacen falta las cuatro coordenadas.', 'wp-autofirma' ),
+                    'completed'           => __( 'El documento firmado se ha guardado como un adjunto nuevo.', 'wp-autofirma' ),
+                    'download'            => __( 'Descargar el PDF firmado', 'wp-autofirma' ),
+                    'edit'                => __( 'Abrir el adjunto en WordPress', 'wp-autofirma' ),
+                    'loading'             => __( 'Cargando el documento…', 'wp-autofirma' ),
+                    'saving'              => __( 'Guardando el documento firmado…', 'wp-autofirma' ),
+                    'signing'             => __( 'Esperando a AutoFirma…', 'wp-autofirma' ),
+                    'unknownError'        => __( 'No se pudo completar la firma.', 'wp-autofirma' ),
                 ),
             )
         );
@@ -187,6 +188,7 @@ final class Media_Page {
                 <?php esc_html_e( 'El original no se sobrescribirá. El resultado se guardará como un adjunto nuevo.', 'wp-autofirma' ); ?>
             </p>
 
+            <?php $this->render_visible_signature_fields(); ?>
 
             <button
                 type="button"
@@ -200,6 +202,129 @@ final class Media_Page {
             <p id="wp-autofirma-result" hidden></p>
         </div>
         <?php
+    }
+
+    /**
+     * Muestra los controles de la firma visible.
+     *
+     * Una firma PAdES es invisible salvo que se le dé un rectángulo donde
+     * dibujarse. Por eso el texto no basta: sin coordenadas AutoFirma no pinta
+     * nada, y quien firmara creería que el sello no funciona.
+     *
+     * @return void
+     */
+    private function render_visible_signature_fields() {
+        $defaults = self::visible_signature_defaults();
+        ?>
+        <details class="wp-autofirma__watermark">
+            <summary><?php esc_html_e( 'Sello visible en el PDF (opcional)', 'wp-autofirma' ); ?></summary>
+
+            <p class="description">
+                <?php esc_html_e( 'Deja el texto vacío para firmar sin sello. La firma es igual de válida: el sello solo la hace visible al abrir el documento.', 'wp-autofirma' ); ?>
+            </p>
+
+            <p>
+                <label for="wp-autofirma-layer2-text">
+                    <?php esc_html_e( 'Texto', 'wp-autofirma' ); ?>
+                </label>
+                <textarea id="wp-autofirma-layer2-text" class="large-text code" rows="2"
+                    placeholder="<?php echo esc_attr( $defaults['text'] ); ?>"></textarea>
+                <span class="description">
+                    <?php
+                    printf(
+                        /* translators: %s: lista de variables admitidas. */
+                        esc_html__( 'Admite variables que AutoFirma sustituye al firmar: %s. En la fecha, PATTERN es un formato de Java, por ejemplo dd/MM/yyyy HH:mm.', 'wp-autofirma' ),
+                        '<code>' . implode( '</code>, <code>', array_map( 'esc_html', self::text_placeholders() ) ) . '</code>'
+                    );
+                    ?>
+                </span>
+            </p>
+
+            <p>
+                <label for="wp-autofirma-page"><?php esc_html_e( 'Página', 'wp-autofirma' ); ?></label>
+                <input type="number" id="wp-autofirma-page" min="1" step="1"
+                    value="<?php echo esc_attr( (string) $defaults['page'] ); ?>" class="small-text" />
+            </p>
+
+            <fieldset>
+                <legend class="screen-reader-text"><?php esc_html_e( 'Coordenadas del sello', 'wp-autofirma' ); ?></legend>
+                <?php
+                foreach ( self::coordinate_fields() as $key => $label ) :
+                    ?>
+                    <label for="wp-autofirma-<?php echo esc_attr( $key ); ?>">
+                        <?php echo esc_html( $label ); ?>
+                        <input type="number" step="1" class="small-text"
+                            id="wp-autofirma-<?php echo esc_attr( $key ); ?>"
+                            value="<?php echo esc_attr( (string) $defaults[ $key ] ); ?>" />
+                    </label>
+                <?php endforeach; ?>
+                <span class="description">
+                    <?php esc_html_e( 'En puntos PDF desde la esquina inferior izquierda: 72 puntos equivalen a una pulgada, y un A4 mide 595 × 842.', 'wp-autofirma' ); ?>
+                </span>
+            </fieldset>
+        </details>
+        <?php
+    }
+
+    /**
+     * Devuelve los valores iniciales del sello.
+     *
+     * @return array<string, mixed>
+     */
+    public static function visible_signature_defaults() {
+        /**
+         * Filtra los valores iniciales del sello visible.
+         *
+         * @param array<string, mixed> $defaults Texto, página y coordenadas.
+         */
+        return (array) apply_filters(
+            'wp_autofirma_visible_signature_defaults',
+            array(
+                'text'   => 'Firmado por $$SUBJECTCN$$' . "\n" . 'Fecha: $$SIGNDATE=dd/MM/yyyy HH:mm$$',
+                'page'   => 1,
+                'left'   => 40,
+                'bottom' => 40,
+                'right'  => 260,
+                'top'    => 110,
+            )
+        );
+    }
+
+    /**
+     * Devuelve las etiquetas de las cuatro coordenadas.
+     *
+     * @return array<string, string>
+     */
+    private static function coordinate_fields() {
+        return array(
+            'left'   => __( 'Izquierda', 'wp-autofirma' ),
+            'bottom' => __( 'Abajo', 'wp-autofirma' ),
+            'right'  => __( 'Derecha', 'wp-autofirma' ),
+            'top'    => __( 'Arriba', 'wp-autofirma' ),
+        );
+    }
+
+    /**
+     * Devuelve las variables que AutoFirma sustituye en el texto.
+     *
+     * Tomadas de la ayuda oficial de AutoFirma, no supuestas.
+     *
+     * @return array<int, string>
+     */
+    private static function text_placeholders() {
+        return array(
+            '$$SUBJECTCN$$',
+            '$$ISSUERCN$$',
+            '$$CERTSERIAL$$',
+            '$$SIGNDATE=PATTERN$$',
+            '$$ORGANIZATION$$',
+            '$$OU$$',
+            '$$SURNAME$$',
+            '$$TITLE$$',
+            '$$REASON$$',
+            '$$LOCATION$$',
+            '$$CONTACT$$',
+        );
     }
 
     /**
