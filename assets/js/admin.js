@@ -3,7 +3,9 @@ import { createSignedFilename } from "./filename.js";
 
 const settings = window.wpAutoFirmaSettings;
 const button = document.querySelector("#wp-autofirma-sign");
-const status = document.querySelector("#wp-autofirma-status");
+const status =
+  document.querySelector("#wp-autofirma-message") ||
+  document.querySelector("#wp-autofirma-status");
 const result = document.querySelector("#wp-autofirma-result");
 
 /**
@@ -186,6 +188,17 @@ async function handleSign() {
     });
 
     status.textContent = settings.strings.completed;
+
+    // El documento ya está firmado y guardado: repetir la operación sobre el
+    // mismo original solo crearía adjuntos duplicados. Se retiran el formulario
+    // y el botón, y queda lo único que ahora tiene sentido hacer, que es
+    // llevarse el resultado.
+    document.querySelector("#wp-autofirma-check")?.removeAttribute("hidden");
+    document
+      .querySelector(".wp-autofirma__watermark")
+      ?.setAttribute("hidden", "");
+    button.hidden = true;
+
     result.hidden = false;
     result.replaceChildren();
 

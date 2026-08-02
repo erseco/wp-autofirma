@@ -293,7 +293,7 @@ var WPAutoFirmaAdmin = (() => {
   // assets/js/admin.js
   var settings = window.wpAutoFirmaSettings;
   var button = document.querySelector("#wp-autofirma-sign");
-  var status = document.querySelector("#wp-autofirma-status");
+  var status = document.querySelector("#wp-autofirma-message") || document.querySelector("#wp-autofirma-status");
   var result = document.querySelector("#wp-autofirma-result");
   async function request(path, options = {}) {
     const response = await fetch(`${settings.restUrl}${path}`, {
@@ -393,6 +393,9 @@ var WPAutoFirmaAdmin = (() => {
         })
       });
       status.textContent = settings.strings.completed;
+      document.querySelector("#wp-autofirma-check")?.removeAttribute("hidden");
+      document.querySelector(".wp-autofirma__watermark")?.setAttribute("hidden", "");
+      button.hidden = true;
       result.hidden = false;
       result.replaceChildren();
       const filename = createSignedFilename(documentData.filename);

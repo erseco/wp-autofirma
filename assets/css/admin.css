@@ -21,3 +21,9 @@
 .wp-autofirma__watermark-fields label {
   margin-right: 1em;
 }
+
+/* Marca de éxito, con el mismo verde que usa la columna de la biblioteca. */
+#wp-autofirma-check {
+  color: #008a20;
+  vertical-align: text-bottom;
+}

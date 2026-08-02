@@ -61,7 +61,8 @@ async function montar({
     <input id="wp-autofirma-right" value="${sello.right ?? "260"}" />
     <input id="wp-autofirma-top" value="${sello.top ?? "110"}" />
     </fieldset>
-    <p id="wp-autofirma-status"></p>
+    <fieldset class="wp-autofirma__watermark"></fieldset>
+    <p id="wp-autofirma-status"><span id="wp-autofirma-check" hidden></span><span id="wp-autofirma-message"></span></p>
     <p id="wp-autofirma-result" hidden></p>
   `;
 
@@ -122,7 +123,7 @@ async function montar({
 
   return {
     boton: document.querySelector("#wp-autofirma-sign"),
-    estado: document.querySelector("#wp-autofirma-status"),
+    estado: document.querySelector("#wp-autofirma-message"),
     resultado: document.querySelector("#wp-autofirma-result"),
     fetchSpy,
   };
@@ -345,5 +346,35 @@ describe("orquestación de la firma", () => {
     casilla.checked = false;
     casilla.dispatchEvent(new Event("change"));
     expect(campos.disabled).toBe(true);
+  });
+
+  it("al terminar retira el formulario y el botón y deja la descarga", async () => {
+    const { boton, resultado } = await montar();
+
+    boton.click();
+    await esperar();
+
+    expect(document.querySelector("#wp-autofirma-check").hidden).toBe(false);
+    expect(boton.hidden).toBe(true);
+    expect(
+      document.querySelector(".wp-autofirma__watermark").hasAttribute("hidden"),
+    ).toBe(true);
+    expect(resultado.hidden).toBe(false);
+    expect(resultado.querySelectorAll("a").length).toBeGreaterThan(0);
+  });
+
+  it("si falla, el formulario y el botón siguen disponibles", async () => {
+    const { boton } = await montar({
+      respuestas: { "/documents/42": { ok: false, body: {} } },
+    });
+
+    boton.click();
+    await esperar();
+
+    expect(boton.hidden).toBe(false);
+    expect(document.querySelector("#wp-autofirma-check").hidden).toBe(true);
+    expect(
+      document.querySelector(".wp-autofirma__watermark").hasAttribute("hidden"),
+    ).toBe(false);
   });
 });

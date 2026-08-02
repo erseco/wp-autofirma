@@ -199,7 +199,10 @@ final class Media_Page {
                 <?php esc_html_e( 'Firmar PDF', 'wp-autofirma' ); ?>
             </button>
 
-            <p id="wp-autofirma-status" role="status" aria-live="polite"></p>
+            <p id="wp-autofirma-status" role="status" aria-live="polite">
+                <span id="wp-autofirma-check" class="dashicons dashicons-yes-alt" aria-hidden="true" hidden></span>
+                <span id="wp-autofirma-message"></span>
+            </p>
             <p id="wp-autofirma-result" hidden></p>
         </div>
         <?php
