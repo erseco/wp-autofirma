@@ -21,8 +21,9 @@ cuándo.
 
 En la pantalla de firma hay un bloque «Sello visible» con una casilla. Mientras
 esté sin marcar se firma sin sello, que es el comportamiento anterior; al
-marcarla se habilitan los campos, que **vienen ya rellenos con un ejemplo
-utilizable**, de modo que puedes probarlo sin escribir nada.
+marcarla se habilitan los campos, ya rellenos con **el mismo texto que AutoFirma
+usa por omisión**, de modo que el sello sale igual que firmando con la
+aplicación de escritorio y puedes probarlo sin escribir nada.
 
 ### El texto
 

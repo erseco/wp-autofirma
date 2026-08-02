@@ -290,7 +290,10 @@ final class Media_Page {
         return (array) apply_filters(
             'wp_autofirma_visible_signature_defaults',
             array(
-                'text'   => 'Firmado por $$SUBJECTCN$$' . "\n" . 'Fecha: $$SIGNDATE=dd/MM/yyyy HH:mm$$',
+                // El mismo que AutoFirma trae por omisión (`pdfLayer2Text` en su
+                // `preferences.properties`), para que el sello salga igual que
+                // firmando con la aplicación de escritorio.
+                'text'   => 'Firmado por $$SUBJECTCN$$ el día $$SIGNDATE=dd/MM/yyyy$$ con un certificado emitido por $$ISSUERCN$$',
                 'page'   => 1,
                 'left'   => 40,
                 'bottom' => 40,
