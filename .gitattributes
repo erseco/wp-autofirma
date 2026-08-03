@@ -1,6 +1,12 @@
 # Normalización de finales de línea en cada checkout.
 * text=auto eol=lf
 
+# Librería de terceros copiada tal cual de upstream por el post-install-cmd de
+# Composer. Sin esta excepción, la normalización de arriba la reescribiría en
+# cuanto upstream trajera un fichero con CRLF, y la copia dejaría de ser
+# idéntica al original.
+includes/vendor/** -text
+
 # Nada de lo que sigue alimenta el ZIP distribuible. Ese paquete lo construye
 # `wp dist-archive` y su lista de exclusiones es .distignore, la única fuente de
 # verdad sobre qué se publica.

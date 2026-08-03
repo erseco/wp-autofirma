@@ -44,6 +44,11 @@ jobs:
       - run: composer check
       - run: npm run check
       - run: git diff --exit-code -- build
+      # `composer install` acaba de regenerar includes/vendor/ desde la versión
+      # fijada en composer.lock. Si no coincide con la copia confirmada, alguien
+      # la editó a mano o la actualizó sin confirmarla, y el paquete llevaría una
+      # librería distinta de la revisada.
+      - run: git diff --exit-code -- includes/vendor
       - run: npm run package
       - name: Crear GitHub Release
         env:
