@@ -96,8 +96,8 @@ antes de `npm run package`, y ahora ese paso es además el que rellena
 ## Riesgos
 
 - **`--force` no vacía el ZIP anterior.** La versión 3.1 de `dist-archive`
-  delega en el binario `zip`, que añade a un archivo existente. Un `npm run
-  package` repetido conservaría ficheros que una regla nueva ya excluye. El
-  script borra el destino antes de construir.
+  delega en el binario `zip`, que añade a un archivo existente. Empaquetar dos
+  veces seguidas conservaría ficheros que una regla nueva ya excluye. El script
+  borra el destino antes de construir.
 - **Reglas sin anclar.** Descritas arriba; mitigadas anclando todas las de raíz
   y comparando la lista de ficheros del paquete.
