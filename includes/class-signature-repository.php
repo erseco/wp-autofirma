@@ -45,6 +45,9 @@ final class Signature_Repository {
             throw new RuntimeException( (string) $upload['error'] );
         }
 
+        // El cuarto argumento pide el error como `WP_Error`. Sin él, un fallo se
+        // devuelve como cero, la comprobación de abajo no lo ve y el adjunto
+        // inexistente se anuncia como firma guardada: peor que un error.
         $attachment_id = wp_insert_attachment(
             array(
                 'post_mime_type' => 'application/pdf',
@@ -53,7 +56,9 @@ final class Signature_Repository {
                 ),
                 'post_status'    => 'inherit',
             ),
-            $upload['file']
+            $upload['file'],
+            0,
+            true
         );
 
         if ( is_wp_error( $attachment_id ) ) {
