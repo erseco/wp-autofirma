@@ -23,66 +23,66 @@ $GLOBALS['wp_autofirma_test_transients'] = array();
 $GLOBALS['wp_autofirma_test_transients_stolen'] = false;
 
 if ( ! function_exists( 'set_transient' ) ) {
-    /**
-     * Guarda un transient.
-     *
-     * @param string $key        Clave.
-     * @param mixed  $value      Valor.
-     * @param int    $expiration Segundos de vida.
-     * @return bool
-     */
-    function set_transient( $key, $value, $expiration = 0 ) {
-        $GLOBALS['wp_autofirma_test_transients'][ $key ] = array(
-            'value'   => $value,
-            'expires' => $expiration > 0 ? time() + $expiration : 0,
-        );
+	/**
+	 * Guarda un transient.
+	 *
+	 * @param string $key        Clave.
+	 * @param mixed  $value      Valor.
+	 * @param int    $expiration Segundos de vida.
+	 * @return bool
+	 */
+	function set_transient( $key, $value, $expiration = 0 ) {
+		$GLOBALS['wp_autofirma_test_transients'][ $key ] = array(
+			'value'   => $value,
+			'expires' => $expiration > 0 ? time() + $expiration : 0,
+		);
 
-        return true;
-    }
+		return true;
+	}
 }
 
 if ( ! function_exists( 'get_transient' ) ) {
-    /**
-     * Recupera un transient.
-     *
-     * @param string $key Clave.
-     * @return mixed Valor, o false si no existe o ha caducado.
-     */
-    function get_transient( $key ) {
-        if ( ! isset( $GLOBALS['wp_autofirma_test_transients'][ $key ] ) ) {
-            return false;
-        }
+	/**
+	 * Recupera un transient.
+	 *
+	 * @param string $key Clave.
+	 * @return mixed Valor, o false si no existe o ha caducado.
+	 */
+	function get_transient( $key ) {
+		if ( ! isset( $GLOBALS['wp_autofirma_test_transients'][ $key ] ) ) {
+			return false;
+		}
 
-        $entry = $GLOBALS['wp_autofirma_test_transients'][ $key ];
+		$entry = $GLOBALS['wp_autofirma_test_transients'][ $key ];
 
-        if ( 0 !== $entry['expires'] && $entry['expires'] < time() ) {
-            unset( $GLOBALS['wp_autofirma_test_transients'][ $key ] );
+		if ( 0 !== $entry['expires'] && $entry['expires'] < time() ) {
+			unset( $GLOBALS['wp_autofirma_test_transients'][ $key ] );
 
-            return false;
-        }
+			return false;
+		}
 
-        if ( ! empty( $GLOBALS['wp_autofirma_test_transients_stolen'] ) ) {
-            unset( $GLOBALS['wp_autofirma_test_transients'][ $key ] );
-        }
+		if ( ! empty( $GLOBALS['wp_autofirma_test_transients_stolen'] ) ) {
+			unset( $GLOBALS['wp_autofirma_test_transients'][ $key ] );
+		}
 
-        return $entry['value'];
-    }
+		return $entry['value'];
+	}
 }
 
 if ( ! function_exists( 'delete_transient' ) ) {
-    /**
-     * Borra un transient.
-     *
-     * @param string $key Clave.
-     * @return bool Si había algo que borrar.
-     */
-    function delete_transient( $key ) {
-        if ( ! isset( $GLOBALS['wp_autofirma_test_transients'][ $key ] ) ) {
-            return false;
-        }
+	/**
+	 * Borra un transient.
+	 *
+	 * @param string $key Clave.
+	 * @return bool Si había algo que borrar.
+	 */
+	function delete_transient( $key ) {
+		if ( ! isset( $GLOBALS['wp_autofirma_test_transients'][ $key ] ) ) {
+			return false;
+		}
 
-        unset( $GLOBALS['wp_autofirma_test_transients'][ $key ] );
+		unset( $GLOBALS['wp_autofirma_test_transients'][ $key ] );
 
-        return true;
-    }
+		return true;
+	}
 }

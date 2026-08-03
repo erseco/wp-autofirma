@@ -18,7 +18,7 @@
 namespace Erseco\WPAutoFirma;
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
 define( 'WP_AUTOFIRMA_VERSION', '0.1.0' );
@@ -33,7 +33,7 @@ define( 'WP_AUTOFIRMA_URL', plugin_dir_url( __FILE__ ) );
 // lo único que no podrá ofrecer es el servidor intermedio, y
 // `Intermediate_Controller::is_available()` lo comprueba antes de anunciarlo.
 if ( is_readable( WP_AUTOFIRMA_PATH . 'vendor/autoload.php' ) ) {
-    require_once WP_AUTOFIRMA_PATH . 'vendor/autoload.php';
+	require_once WP_AUTOFIRMA_PATH . 'vendor/autoload.php';
 }
 
 require_once WP_AUTOFIRMA_PATH . 'includes/class-bundled-autoloader.php';
@@ -52,7 +52,7 @@ require_once WP_AUTOFIRMA_PATH . 'includes/class-intermediate-controller.php';
 // clase no puede ni declararse: cargarla provocaría un error irrecuperable y el
 // plugin entero dejaría de funcionar. Solo se carga si la interfaz está.
 if ( interface_exists( 'Erseco\AutoFirma\IntermediateServer\Storage\StoreInterface' ) ) {
-    require_once WP_AUTOFIRMA_PATH . 'includes/class-transient-store.php';
+	require_once WP_AUTOFIRMA_PATH . 'includes/class-transient-store.php';
 }
 
 require_once WP_AUTOFIRMA_PATH . 'includes/class-shortcodes.php';

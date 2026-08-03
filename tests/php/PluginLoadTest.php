@@ -20,78 +20,78 @@ use PHPUnit\Framework\TestCase;
  */
 final class PluginLoadTest extends TestCase {
 
-    /**
-     * Directorio temporal con la copia sin dependencias.
-     *
-     * @var string
-     */
-    private $directory = '';
+	/**
+	 * Directorio temporal con la copia sin dependencias.
+	 *
+	 * @var string
+	 */
+	private $directory = '';
 
-    /**
-     * Copia el plugin sin `vendor/`.
-     */
-    protected function setUp(): void {
-        $root            = dirname( __DIR__, 2 );
-        $this->directory = sys_get_temp_dir() . '/wpaf-' . uniqid();
+	/**
+	 * Copia el plugin sin `vendor/`.
+	 */
+	protected function setUp(): void {
+		$root            = dirname( __DIR__, 2 );
+		$this->directory = sys_get_temp_dir() . '/wpaf-' . uniqid();
 
-        mkdir( $this->directory . '/includes', 0777, true );
-        mkdir( $this->directory . '/admin', 0777, true );
-        mkdir( $this->directory . '/tests/php/Support', 0777, true );
+		mkdir( $this->directory . '/includes', 0777, true );
+		mkdir( $this->directory . '/admin', 0777, true );
+		mkdir( $this->directory . '/tests/php/Support', 0777, true );
 
-        copy( $root . '/wp-autofirma.php', $this->directory . '/wp-autofirma.php' );
-        copy(
-            $root . '/tests/php/Support/plugin-probe.php',
-            $this->directory . '/tests/php/Support/plugin-probe.php'
-        );
+		copy( $root . '/wp-autofirma.php', $this->directory . '/wp-autofirma.php' );
+		copy(
+			$root . '/tests/php/Support/plugin-probe.php',
+			$this->directory . '/tests/php/Support/plugin-probe.php'
+		);
 
-        foreach ( array( 'includes', 'admin' ) as $folder ) {
-            foreach ( (array) glob( $root . '/' . $folder . '/*.php' ) as $file ) {
-                copy( $file, $this->directory . '/' . $folder . '/' . basename( $file ) );
-            }
-        }
-    }
+		foreach ( array( 'includes', 'admin' ) as $folder ) {
+			foreach ( (array) glob( $root . '/' . $folder . '/*.php' ) as $file ) {
+				copy( $file, $this->directory . '/' . $folder . '/' . basename( $file ) );
+			}
+		}
+	}
 
-    /**
-     * Retira la copia.
-     */
-    protected function tearDown(): void {
-        if ( '' === $this->directory || ! is_dir( $this->directory ) ) {
-            return;
-        }
+	/**
+	 * Retira la copia.
+	 */
+	protected function tearDown(): void {
+		if ( '' === $this->directory || ! is_dir( $this->directory ) ) {
+			return;
+		}
 
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator( $this->directory, \FilesystemIterator::SKIP_DOTS ),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
+		$files = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator( $this->directory, \FilesystemIterator::SKIP_DOTS ),
+			\RecursiveIteratorIterator::CHILD_FIRST
+		);
 
-        foreach ( $files as $file ) {
-            $file->isDir() ? rmdir( $file->getPathname() ) : unlink( $file->getPathname() );
-        }
+		foreach ( $files as $file ) {
+			$file->isDir() ? rmdir( $file->getPathname() ) : unlink( $file->getPathname() );
+		}
 
-        rmdir( $this->directory );
-    }
+		rmdir( $this->directory );
+	}
 
-    /**
-     * El plugin carga sin `vendor/` y desactiva el servidor intermedio.
-     */
-    public function test_loads_without_composer_dependencies() {
-        $this->assertDirectoryDoesNotExist( $this->directory . '/vendor' );
+	/**
+	 * El plugin carga sin `vendor/` y desactiva el servidor intermedio.
+	 */
+	public function test_loads_without_composer_dependencies() {
+		$this->assertDirectoryDoesNotExist( $this->directory . '/vendor' );
 
-        $output = array();
-        $status = 0;
+		$output = array();
+		$status = 0;
 
-        exec(
-            escapeshellarg( PHP_BINARY ) . ' '
-                . escapeshellarg( $this->directory . '/tests/php/Support/plugin-probe.php' )
-                . ' 2>&1',
-            $output,
-            $status
-        );
+		exec(
+			escapeshellarg( PHP_BINARY ) . ' '
+				. escapeshellarg( $this->directory . '/tests/php/Support/plugin-probe.php' )
+				. ' 2>&1',
+			$output,
+			$status
+		);
 
-        $printed = implode( "\n", $output );
+		$printed = implode( "\n", $output );
 
-        $this->assertSame( 0, $status, 'El plugin no debe fallar sin dependencias: ' . $printed );
-        $this->assertStringNotContainsString( 'Fatal error', $printed );
-        $this->assertStringContainsString( 'no disponible', $printed );
-    }
+		$this->assertSame( 0, $status, 'El plugin no debe fallar sin dependencias: ' . $printed );
+		$this->assertStringNotContainsString( 'Fatal error', $printed );
+		$this->assertStringContainsString( 'no disponible', $printed );
+	}
 }
