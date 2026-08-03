@@ -1,33 +1,18 @@
+# Normalización de finales de línea en cada checkout.
 * text=auto eol=lf
 
-/.github export-ignore
-/docs export-ignore
-/tests export-ignore
-/.distignore export-ignore
-/.editorconfig export-ignore
-/.npmrc export-ignore
+# Nada de lo que sigue alimenta el ZIP distribuible. Ese paquete lo construye
+# `wp dist-archive` y su lista de exclusiones es .distignore, la única fuente de
+# verdad sobre qué se publica.
+#
+# Estas reglas solo dan forma al ZIP de código fuente que GitHub sirve en
+# archive/refs/heads/*.zip, el que blueprint.json instala en WordPress
+# Playground. Conviene que la lista sea corta y no un espejo de .distignore: lo
+# que git no versiona (node_modules/, vendor/, dist/, coverage/) nunca llega a un
+# `git archive`.
+/.agents        export-ignore
+/.claude        export-ignore
+/.github        export-ignore
 /.gitattributes export-ignore
-/.gitignore export-ignore
-/.phpcs.xml.dist export-ignore
-/.prettierignore export-ignore
-/.wp-env.json export-ignore
-/AGENTS.md export-ignore
-/CODE_OF_CONDUCT.md export-ignore
-/Makefile export-ignore
-/README.md export-ignore
-/assets/js export-ignore
-/blueprint.json export-ignore
-/composer.json export-ignore
-/composer.lock export-ignore
-/package.json export-ignore
-/package-lock.json export-ignore
-/phpunit.xml.dist export-ignore
-/scripts export-ignore
-/vitest.config.js export-ignore
-/zensical.toml export-ignore
-/.agents export-ignore
-/.claude export-ignore
-/CLAUDE.md export-ignore
-/dist export-ignore
-/.phpunit.result.cache export-ignore
-/coverage export-ignore
+/docs           export-ignore
+/tests          export-ignore

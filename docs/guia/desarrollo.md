@@ -24,8 +24,20 @@ la rama `main`.
 npm run package
 ```
 
-El script comprueba la versión y genera el ZIP mediante `git archive` y las
-reglas `export-ignore` de `.gitattributes`.
+El script comprueba la versión y genera el ZIP mediante `wp dist-archive`, que
+lee las exclusiones de `.distignore`. `--plugin-dirname=wp-autofirma` garantiza
+que el paquete se extraiga siempre en esa carpeta, se llame como se llame el
+fichero.
+
+`.gitattributes` no interviene aquí: solo da forma al ZIP de código fuente que
+GitHub sirve en `archive/refs/heads/*.zip`, el que `blueprint.json` instala en
+Playground.
+
+La librería del servidor intermedio no se instala con Composer en el destino:
+viaja versionada en `includes/vendor/`, donde la deja el script
+`copy-runtime-dependencies` de `composer.json` al ejecutar `composer install` o
+`composer update`. `Bundled_Autoloader` la carga cuando no hay autoload de
+Composer, que es el caso en cualquier instalación real del plugin.
 
 ## Pruebas de integración
 

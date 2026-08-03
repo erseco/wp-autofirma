@@ -11,10 +11,23 @@
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
     "phpunit/phpunit": "^9.6",
     "squizlabs/php_codesniffer": "^3.13",
+    "wp-cli/dist-archive-command": "^3.1",
     "wp-coding-standards/wpcs": "^3.2",
     "yoast/phpunit-polyfills": "^4.0"
   },
   "scripts": {
+    "copy-runtime-dependencies": [
+      "rm -rf includes/vendor/autofirma-intermediate-server",
+      "mkdir -p includes/vendor/autofirma-intermediate-server",
+      "cp -r vendor/erseco/autofirma-intermediate-server/src includes/vendor/autofirma-intermediate-server/",
+      "cp vendor/erseco/autofirma-intermediate-server/LICENSE includes/vendor/autofirma-intermediate-server/"
+    ],
+    "post-install-cmd": [
+      "@copy-runtime-dependencies"
+    ],
+    "post-update-cmd": [
+      "@copy-runtime-dependencies"
+    ],
     "check": [
       "@phpcs",
       "@test"
