@@ -1,4 +1,4 @@
-.PHONY: build check check-all check-docker clean coverage down fix help lint package plugin-check start start-if-not-running test test-integration test-js up
+.PHONY: build check check-all check-docker check-plugin clean coverage down fix help lint package plugin-check start start-if-not-running test test-integration test-js up
 
 DOMAIN := wp-autofirma
 IN_CONTAINER := wp-content/plugins/$(DOMAIN)
@@ -62,7 +62,7 @@ coverage: check-docker ## Mide la cobertura de PHP, unitaria y de integración
 		./vendor/bin/phpunit --configuration=phpunit-integration.xml.dist \
 		--coverage-clover=coverage-integration.xml
 
-plugin-check: start-if-not-running package ## Pasa el Plugin Check sobre el ZIP distribuible
+check-plugin: start-if-not-running package ## Pasa el Plugin Check sobre el ZIP distribuible
 	npx wp-env run cli wp plugin install plugin-check --activate --color
 	@# Se comprueba el paquete que de verdad se instala, no el árbol de trabajo:
 	@# los ficheros de desarrollo no viajan en el ZIP y revisarlos daría errores
@@ -73,14 +73,30 @@ plugin-check: start-if-not-running package ## Pasa el Plugin Check sobre el ZIP 
 		unzip -q $(DOMAIN)/dist/$(DOMAIN)-*.zip -d .pc-tmp; \
 		mv .pc-tmp/$(DOMAIN) $(DOMAIN)-dist; \
 		rm -rf .pc-tmp'
-	-npx wp-env run cli wp plugin check $(DOMAIN)-dist --slug=$(DOMAIN) --ignore-warnings --color
-	@npx wp-env run cli sh -c 'rm -rf wp-content/plugins/$(DOMAIN)-dist' > /dev/null
+	@# `wp plugin check` termina con código 0 aunque encuentre errores, así que
+	@# el código de salida no sirve para decidir: hay que mirar la salida. Se
+	@# guarda en un fichero, se cuentan los ERROR y solo después se limpia la
+	@# copia desempaquetada, para poder fallar sin dejar basura en el contenedor.
+	@TMPFILE=$$(mktemp); \
+	npx wp-env run cli wp plugin check $(DOMAIN)-dist --slug=$(DOMAIN) --ignore-warnings --color 2>&1 | tee $$TMPFILE; \
+	ERRORS=$$(sed 's/\x1B\[[0-9;]*[mK]//g' $$TMPFILE | grep -cE '\bERROR\b' || true); \
+	rm -f $$TMPFILE; \
+	npx wp-env run cli sh -c 'rm -rf wp-content/plugins/$(DOMAIN)-dist' > /dev/null; \
+	echo ""; \
+	if [ "$$ERRORS" -gt 0 ]; then \
+		echo "Plugin Check: ✗ se han encontrado $$ERRORS error(es)."; \
+		exit 1; \
+	fi; \
+	echo "Plugin Check: ✓ sin errores."
+
+# Alias del nombre que usan los otros tres plugins hermanos.
+plugin-check: check-plugin ## Alias de check-plugin
 
 check: ## Ejecuta formato, linter, pruebas y construcción
 	composer check
 	npm run check
 
-check-all: check test-integration ## Lo anterior más las pruebas de integración
+check-all: check test-integration check-plugin ## Lo anterior, más integración y Plugin Check
 
 package: ## Crea el ZIP distribuible en dist/
 	npm run package
