@@ -21,7 +21,8 @@ final class TransientStoreTest extends TestCase {
      * Vacía los transients simulados entre pruebas.
      */
     protected function setUp(): void {
-        $GLOBALS['wp_autofirma_test_transients'] = array();
+        $GLOBALS['wp_autofirma_test_transients']        = array();
+        $GLOBALS['wp_autofirma_test_transients_stolen'] = false;
     }
 
     /**

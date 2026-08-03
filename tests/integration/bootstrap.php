@@ -29,6 +29,7 @@ if ( ! is_readable( $wp_autofirma_dir . '/includes/functions.php' ) ) {
 // entre versiones del framework.
 require_once $wp_autofirma_root . '/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
 require_once $wp_autofirma_dir . '/includes/functions.php';
+require_once __DIR__ . '/../php/Support/unreadable-stream.php';
 
 /**
  * Carga el plugin antes de que WordPress termine de arrancar.

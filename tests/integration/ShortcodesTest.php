@@ -167,4 +167,68 @@ class ShortcodesTest extends WP_UnitTestCase {
 
         $this->assertStringContainsString( 'No se ha validado', $output );
     }
+
+    /**
+     * El listado deja fuera lo que quien mira no puede ver.
+     *
+     * Es la misma regla que en el resto de shortcodes, pero aquí importa más:
+     * el listado no lo escribe nadie con un identificador delante, así que sin
+     * esta comprobación enseñaría todo lo firmado del sitio a cualquiera.
+     */
+    public function test_listing_hides_documents_the_visitor_cannot_read() {
+        wp_update_post(
+            array(
+                'ID'         => $this->signed_id,
+                'post_title' => 'Resolución publicada',
+            )
+        );
+
+        $reservado = self::factory()->attachment->create_upload_object(
+            dirname( __DIR__ ) . '/php/fixtures/signed.pdf'
+        );
+        $borrador  = self::factory()->post->create( array( 'post_status' => 'draft' ) );
+
+        wp_update_post(
+            array(
+                'ID'          => $reservado,
+                'post_title'  => 'Resolución reservada',
+                'post_parent' => $borrador,
+            )
+        );
+        clean_post_cache( $reservado );
+
+        wp_set_current_user( 0 );
+
+        $output = do_shortcode( '[autofirma_signed_documents]' );
+
+        $this->assertStringContainsString( 'Resolución publicada', $output );
+        $this->assertStringNotContainsString( 'Resolución reservada', $output );
+    }
+
+    /**
+     * Sin documentos firmados no se pinta nada.
+     *
+     * Ni siquiera una lista vacía: dejaría un hueco en la página.
+     */
+    public function test_listing_renders_nothing_without_signed_documents() {
+        wp_delete_attachment( $this->signed_id, true );
+
+        $this->assertSame( '', do_shortcode( '[autofirma_signed_documents]' ) );
+    }
+
+    /**
+     * Sin `id`, el estado se toma del adjunto que se está mostrando.
+     *
+     * Es lo que permite poner el shortcode en la plantilla de adjunto sin
+     * repetir el identificador documento a documento.
+     */
+    public function test_status_falls_back_to_the_attachment_being_displayed() {
+        $GLOBALS['post'] = get_post( $this->signed_id );
+
+        $output = do_shortcode( '[autofirma_signature_status]' );
+
+        unset( $GLOBALS['post'] );
+
+        $this->assertStringContainsString( 'Firmado digitalmente', $output );
+    }
 }

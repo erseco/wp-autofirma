@@ -11,6 +11,17 @@
 
 $GLOBALS['wp_autofirma_test_transients'] = array();
 
+/**
+ * Cuando vale `true`, cada lectura se lleva el dato por detrás.
+ *
+ * Reproduce dos peticiones simultáneas: la lectura devuelve el contenido y, para
+ * cuando el almacén intenta borrarlo, otra ya se lo ha llevado. Es la única
+ * forma de provocar aquí la carrera que decide el consumo único.
+ *
+ * @var bool
+ */
+$GLOBALS['wp_autofirma_test_transients_stolen'] = false;
+
 if ( ! function_exists( 'set_transient' ) ) {
     /**
      * Guarda un transient.
@@ -48,6 +59,10 @@ if ( ! function_exists( 'get_transient' ) ) {
             unset( $GLOBALS['wp_autofirma_test_transients'][ $key ] );
 
             return false;
+        }
+
+        if ( ! empty( $GLOBALS['wp_autofirma_test_transients_stolen'] ) ) {
+            unset( $GLOBALS['wp_autofirma_test_transients'][ $key ] );
         }
 
         return $entry['value'];

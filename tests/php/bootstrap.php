@@ -8,6 +8,7 @@
 // El almacén implementa una interfaz de erseco/autofirma-intermediate-server.
 require_once dirname( __DIR__, 2 ) . '/vendor/autoload.php';
 require_once __DIR__ . '/Support/transients.php';
+require_once __DIR__ . '/Support/unreadable-stream.php';
 
 require_once dirname( __DIR__, 2 ) . '/includes/class-signature-data.php';
 require_once dirname( __DIR__, 2 ) . '/includes/class-signature-detector.php';

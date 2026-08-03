@@ -238,6 +238,36 @@ class MediaPageTest extends WP_UnitTestCase {
     }
 
     /**
+     * El sitio también puede señalar su AutoScript con una constante.
+     *
+     * Es la vía documentada en la guía de instalación, para quien sirve el
+     * fichero oficial desde su propia sede. Se comprueban las dos ramas en la
+     * misma prueba porque una constante de PHP no puede deshacerse: definirla
+     * antes de tiempo cambiaría la URL por omisión del resto de la suite.
+     */
+    public function test_the_site_can_point_to_its_own_autoscript_with_a_constant() {
+        $this->page->enqueue_assets( $this->register_and_get_hook() );
+
+        $this->assertStringEndsWith(
+            'build/autoscript.js',
+            wp_scripts()->registered['wp-autofirma-autoscript']->src,
+            'Sin constante ni filtro se sirve la copia que viaja en el plugin.'
+        );
+
+        define( 'WP_AUTOFIRMA_AUTOSCRIPT_URL', 'https://sede.example.org/autoscript.js' );
+
+        // Un identificador ya registrado ignora la fuente nueva, así que la cola
+        // se rehace para que se vuelva a leer.
+        $GLOBALS['wp_scripts'] = null;
+        $this->page->enqueue_assets( $this->register_and_get_hook() );
+
+        $this->assertSame(
+            'https://sede.example.org/autoscript.js',
+            wp_scripts()->registered['wp-autofirma-autoscript']->src
+        );
+    }
+
+    /**
      * Registra la pantalla y devuelve su sufijo.
      *
      * @return string

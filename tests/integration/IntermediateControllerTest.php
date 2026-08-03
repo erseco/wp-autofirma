@@ -236,6 +236,111 @@ class IntermediateControllerTest extends WP_UnitTestCase {
     }
 
     /**
+     * Lo que devuelve el protocolo se imprime tal cual, sin envolverlo en JSON.
+     *
+     * AutoScript usa byte a byte el dato que recupera. Serializarlo como JSON
+     * —con sus comillas y sus escapes— lo corrompería, y la firma no podría
+     * recomponerse.
+     */
+    public function test_protocol_body_is_printed_as_plain_text() {
+        $peticion = new WP_REST_Request(
+            'POST',
+            '/wp-autofirma/v1/intermediate/' . str_repeat( 'c', 32 ) . '/retrieve'
+        );
+
+        ob_start();
+        $servido = apply_filters(
+            'rest_pre_serve_request',
+            false,
+            new WP_REST_Response( 'contenido opaco' ),
+            $peticion,
+            $this->server
+        );
+        $salida  = ob_get_clean();
+
+        $this->assertTrue( $servido );
+        $this->assertSame( 'contenido opaco', $salida );
+    }
+
+    /**
+     * Una respuesta que ya se ha servido no se imprime otra vez.
+     */
+    public function test_an_already_served_response_is_left_alone() {
+        ob_start();
+        $servido = ( new Intermediate_Controller() )->serve_as_text(
+            true,
+            new WP_REST_Response( 'contenido opaco' ),
+            new WP_REST_Request( 'POST', '/wp-autofirma/v1/intermediate/' . str_repeat( 'c', 32 ) . '/retrieve' )
+        );
+        $salida  = ob_get_clean();
+
+        $this->assertTrue( $servido );
+        $this->assertSame( '', $salida );
+    }
+
+    /**
+     * Las demás rutas de la API REST siguen su curso.
+     *
+     * Volcar el cuerpo de cualquier respuesta rompería el JSON de todo el sitio,
+     * no solo el de este plugin.
+     */
+    public function test_other_rest_routes_are_left_alone() {
+        ob_start();
+        $servido = ( new Intermediate_Controller() )->serve_as_text(
+            false,
+            new WP_REST_Response( 'contenido opaco' ),
+            new WP_REST_Request( 'GET', '/wp/v2/posts' )
+        );
+        $salida  = ob_get_clean();
+
+        $this->assertFalse( $servido );
+        $this->assertSame( '', $salida );
+    }
+
+    /**
+     * Sin una petición que mirar no se decide nada.
+     */
+    public function test_without_a_request_nothing_is_printed() {
+        ob_start();
+        $servido = ( new Intermediate_Controller() )->serve_as_text(
+            false,
+            new WP_REST_Response( 'contenido opaco' ),
+            null
+        );
+        $salida  = ob_get_clean();
+
+        $this->assertFalse( $servido );
+        $this->assertSame( '', $salida );
+    }
+
+    /**
+     * Los errores que genera WordPress se dejan a la API REST.
+     *
+     * Una ruta que no existe o un método no admitido llegan aquí como array.
+     * Imprimirlos como texto metería un aviso de PHP dentro de la respuesta.
+     */
+    public function test_wordpress_errors_are_left_to_the_rest_api() {
+        $respuesta = new WP_REST_Response(
+            array(
+                'code'    => 'rest_no_route',
+                'message' => 'No route was found matching the URL and request method.',
+            ),
+            404
+        );
+
+        ob_start();
+        $servido = ( new Intermediate_Controller() )->serve_as_text(
+            false,
+            $respuesta,
+            new WP_REST_Request( 'GET', '/wp-autofirma/v1/intermediate/' . str_repeat( 'c', 32 ) . '/storage' )
+        );
+        $salida  = ob_get_clean();
+
+        $this->assertFalse( $servido );
+        $this->assertSame( '', $salida );
+    }
+
+    /**
      * Con enlaces permanentes simples el servicio no se ofrece.
      */
     public function test_service_is_not_offered_without_pretty_permalinks() {

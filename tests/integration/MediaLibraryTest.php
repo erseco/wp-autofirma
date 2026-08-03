@@ -89,6 +89,20 @@ class MediaLibraryTest extends WP_UnitTestCase {
     }
 
     /**
+     * De lo que no se puede analizar no se dice nada.
+     *
+     * Una fila «Formato no analizable» en cada imagen de la biblioteca sería
+     * ruido: ahí no hay firma que buscar y decirlo no aporta.
+     */
+    public function test_unanalysable_files_get_no_signature_details() {
+        $imagen = self::factory()->attachment->create( array( 'post_mime_type' => 'image/jpeg' ) );
+
+        $fields = apply_filters( 'attachment_fields_to_edit', array(), get_post( $imagen ) );
+
+        $this->assertArrayNotHasKey( 'wp_autofirma_signature', $fields );
+    }
+
+    /**
      * El filtro retira la señalización por completo.
      */
     public function test_filter_removes_the_marking() {

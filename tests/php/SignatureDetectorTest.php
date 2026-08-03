@@ -97,6 +97,37 @@ final class SignatureDetectorTest extends TestCase {
     }
 
     /**
+     * De la cadena que viaja dentro sale la hoja, no la autoridad.
+     *
+     * Un PKCS#7 lleva todos los certificados hasta la raíz. Si se presentara la
+     * autoridad como firmante, la ficha del documento diría que lo firmó la
+     * entidad emisora en lugar de quien lo firmó de verdad.
+     */
+    public function test_certificate_authority_is_not_reported_as_the_signer() {
+        $result = Signature_Detector::inspect( $this->fixture( 'signed-cadena.csig' ) );
+
+        $this->assertCount( 1, $result['signers'] );
+        $this->assertSame( 'FIRMANTE CON CADENA', $result['signers'][0]['name'] );
+        $this->assertSame( 'AUTORIDAD DE PRUEBA', $result['signers'][0]['issuer'] );
+    }
+
+    /**
+     * Un titular sin CN, OU ni O deja el nombre vacío en lugar de inventarlo.
+     *
+     * Los hay: algunos certificados identifican con el número de documento y
+     * poco más. La firma se detecta igual, y quien la presenta ya decide qué
+     * hacer con un firmante sin nombre.
+     */
+    public function test_subject_without_a_usable_name_leaves_it_empty() {
+        $result = Signature_Detector::inspect( $this->fixture( 'signed-sin-nombre.csig' ) );
+
+        $this->assertTrue( $result['signed'] );
+        $this->assertCount( 1, $result['signers'] );
+        $this->assertSame( '', $result['signers'][0]['name'] );
+        $this->assertSame( 'AUTORIDAD DE PRUEBA', $result['signers'][0]['issuer'] );
+    }
+
+    /**
      * Las firmas XAdES se distinguen de un XMLDSig cualquiera.
      */
     public function test_detects_xades() {

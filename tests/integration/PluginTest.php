@@ -52,6 +52,41 @@ class PluginTest extends WP_UnitTestCase {
     }
 
     /**
+     * La instancia se crea la primera vez que se pide, no antes.
+     */
+    public function test_the_instance_is_created_on_first_use() {
+        $propiedad = new ReflectionProperty( Plugin::class, 'instance' );
+        $propiedad->setAccessible( true );
+        $previa = $propiedad->getValue();
+
+        $propiedad->setValue( null, null );
+
+        $primera = Plugin::instance();
+        $segunda = Plugin::instance();
+
+        // La instancia original vuelve a su sitio: es la que tiene enganchados
+        // los hooks del arranque.
+        $propiedad->setValue( null, $previa );
+
+        $this->assertInstanceOf( Plugin::class, $primera );
+        $this->assertNotSame( $previa, $primera );
+        $this->assertSame( $primera, $segunda );
+    }
+
+    /**
+     * Nadie construye el plugin por su cuenta.
+     *
+     * Dos instancias engancharían dos veces cada hook, y cada componente
+     * pintaría su columna y sus rutas por duplicado.
+     */
+    public function test_the_constructor_is_private() {
+        $constructor = ( new ReflectionClass( Plugin::class ) )->getConstructor();
+
+        $this->assertNotNull( $constructor );
+        $this->assertTrue( $constructor->isPrivate() );
+    }
+
+    /**
      * Registrar deja enganchado todo lo que el plugin necesita.
      */
     public function test_register_hooks_every_component() {

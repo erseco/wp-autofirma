@@ -212,6 +212,53 @@ class PresentationTest extends WP_UnitTestCase {
     }
 
     /**
+     * Un documento que existe pero no se deja leer se responde como tal.
+     *
+     * No es lo mismo que no encontrarlo ni que no admitir su formato, y el
+     * mensaje tiene que distinguirlo: apunta a un problema del alojamiento.
+     */
+    public function test_an_unreadable_document_is_reported() {
+        WP_AutoFirma_Unreadable_Stream::register();
+
+        $attachment_id = self::factory()->attachment->create(
+            array( 'post_mime_type' => 'application/pdf' )
+        );
+
+        add_filter( 'get_attached_file', array( $this, 'unreadable_path' ) );
+
+        // El fallo de lectura genera un aviso de PHP, que aquí es el resultado
+        // esperado: se silencia mientras dura la llamada.
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- No es depuración: silencia el aviso que la propia prueba provoca a propósito.
+        set_error_handler(
+            static function () {
+                return true;
+            }
+        );
+
+        try {
+            ( new Document_Service() )->get_document( $attachment_id );
+            $mensaje = '';
+        } catch ( RuntimeException $excepcion ) {
+            $mensaje = $excepcion->getMessage();
+        } finally {
+            restore_error_handler();
+            remove_filter( 'get_attached_file', array( $this, 'unreadable_path' ) );
+            WP_AutoFirma_Unreadable_Stream::unregister();
+        }
+
+        $this->assertSame( 'No se pudo cargar el documento.', $mensaje );
+    }
+
+    /**
+     * Devuelve una ruta que no se deja leer, para la prueba anterior.
+     *
+     * @return string
+     */
+    public function unreadable_path() {
+        return WP_AutoFirma_Unreadable_Stream::path();
+    }
+
+    /**
      * Devuelve un límite diminuto para la prueba anterior.
      *
      * @return int

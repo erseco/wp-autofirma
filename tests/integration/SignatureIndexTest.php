@@ -150,6 +150,18 @@ class SignatureIndexTest extends WP_UnitTestCase {
     }
 
     /**
+     * Un identificador que no señala a nada se responde como desconocido.
+     *
+     * Llega desde los shortcodes, donde el número lo escribe quien redacta la
+     * página: un cero o un identificador inventado no puede acabar leyendo del
+     * disco ni escribiendo meta de ningún sitio.
+     */
+    public function test_an_invalid_identifier_is_unknown() {
+        $this->assertSame( Signature_Detector::UNKNOWN, $this->index->status( 0 ) );
+        $this->assertSame( Signature_Detector::UNKNOWN, $this->index->status( -5 ) );
+    }
+
+    /**
      * La marca puede consultarse con `meta_query`.
      */
     public function test_signed_documents_can_be_queried() {
