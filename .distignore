@@ -1,34 +1,84 @@
-/.git
+# Ficheros y directorios que no entran en el ZIP distribuible.
+#
+# Esta es la única lista que decide qué se publica: `npm run package` construye
+# el paquete con `wp dist-archive`, que lee este fichero directamente del árbol
+# de trabajo.
+#
+# `.gitattributes` NO alimenta este archivo. Solo da forma al ZIP de código
+# fuente que GitHub sirve en archive/refs/heads/*.zip, que es el que
+# blueprint.json instala en WordPress Playground.
+#
+# Dos detalles del emparejado, heredados de inmarelibero/gitignore-checker:
+#
+#   * No distingue mayúsculas de minúsculas, al contrario que git en Linux.
+#   * Una regla sin anclar casa a cualquier profundidad. Un `vendor` suelto se
+#     llevaría por delante includes/vendor/, que es la librería del servidor
+#     intermedio que el plugin carga en ejecución.
+#
+# Por eso las reglas de raíz llevan barra inicial. Las pocas que deben casar a
+# cualquier profundidad están agrupadas al final.
+
+# Integración continua
 /.github
-/docs
-/node_modules
-/scripts
-/tests
-/vendor
-/.editorconfig
-/.gitattributes
-/.gitignore
-/.phpcs.xml.dist
-/.prettierignore
-/.wp-env.json
-/AGENTS.md
-/CODE_OF_CONDUCT.md
-/Makefile
-/README.md
-/assets/js
-/blueprint.json
-/composer.json
-/composer.lock
-/package.json
-/package-lock.json
-/phpunit.xml.dist
-/vitest.config.js
-/zensical.toml
-/dist
+
+# Instrucciones para agentes y skills vendorizadas
 /.agents
 /.claude
-/.npmrc
+/AGENTS.md
 /CLAUDE.md
-/.distignore
+
+# Herramientas y configuración de desarrollo
+/.editorconfig
+/.npmrc
+/.phpcs.xml.dist
 /.phpunit.result.cache
+/.prettierignore
+/.wp-env.json
+/codecov.yml
+/composer.json
+/composer.lock
+/Makefile
+/package.json
+/package-lock.json
+/phpunit-integration.xml.dist
+/phpunit.xml.dist
+/scripts
+/vitest.config.js
+
+# Pruebas y todo lo que escriben
 /coverage
+/tests
+
+# Dependencias de desarrollo. Solo se excluye el `vendor/` de la raíz: la
+# librería de ejecución vive en includes/vendor/, copiada ahí por el script
+# `copy-runtime-dependencies` de composer.json.
+/node_modules
+/vendor
+
+# Fuentes de los scripts de administración: lo que se publica es el `build/`
+# que genera esbuild.
+/assets/js
+
+# El ZIP se escribe aquí; no puede acabar dentro de sí mismo.
+/dist
+
+# Documentación del repositorio. La de cara al usuario es readme.txt, y esa sí
+# viaja.
+/blueprint.json
+/CODE_OF_CONDUCT.md
+/docs
+/README.md
+
+# La propia metadatos de empaquetado
+/.distignore
+
+# Reglas que deben casar a cualquier profundidad: ninguna de estas tiene sentido
+# dentro de un paquete, esté donde esté.
+.git
+.gitattributes
+.gitignore
+node_modules
+.DS_Store
+*.DS_Store
+.idea
+sftp-config.json

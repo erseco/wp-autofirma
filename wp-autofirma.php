@@ -26,13 +26,18 @@ define( 'WP_AUTOFIRMA_FILE', __FILE__ );
 define( 'WP_AUTOFIRMA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WP_AUTOFIRMA_URL', plugin_dir_url( __FILE__ ) );
 
-// Dependencias de Composer. El paquete distribuible las lleva dentro; en el
-// repositorio aparecen al ejecutar `composer install`. Si faltan, el plugin
-// sigue firmando: lo único que no podrá ofrecer es el servidor intermedio, y
+// Dependencias de Composer. En el repositorio, `composer install` deja aquí el
+// autoload; el paquete distribuible no lleva `vendor/`, y en su lugar incluye la
+// librería del servidor intermedio bajo `includes/vendor/`, que carga
+// `Bundled_Autoloader`. Si no está ninguna de las dos, el plugin sigue firmando:
+// lo único que no podrá ofrecer es el servidor intermedio, y
 // `Intermediate_Controller::is_available()` lo comprueba antes de anunciarlo.
 if ( is_readable( WP_AUTOFIRMA_PATH . 'vendor/autoload.php' ) ) {
     require_once WP_AUTOFIRMA_PATH . 'vendor/autoload.php';
 }
+
+require_once WP_AUTOFIRMA_PATH . 'includes/class-bundled-autoloader.php';
+Bundled_Autoloader::register();
 
 require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-data.php';
 require_once WP_AUTOFIRMA_PATH . 'includes/class-signature-detector.php';

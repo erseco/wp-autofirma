@@ -10,35 +10,29 @@ if [[ "${version}" != "${header_version}" ]]; then
   exit 1
 fi
 
+# El plugin depende en ejecución de erseco/autofirma-intermediate-server, y quien
+# instala un plugin de WordPress no ejecuta Composer. La librería viaja por eso
+# dentro de includes/vendor/, donde la deja `copy-runtime-dependencies` al
+# instalar o actualizar las dependencias. Si no está, el paquete saldría sin
+# servidor intermedio y sin avisar.
+if [[ ! -d includes/vendor/autofirma-intermediate-server/src ]]; then
+  echo "Falta includes/vendor/autofirma-intermediate-server. Ejecuta 'composer install'." >&2
+  exit 1
+fi
+
 mkdir -p dist
-staging="$(mktemp -d)"
-trap 'rm -rf "${staging}"' EXIT
 
-# Se parte de `git archive` para que el paquete contenga exactamente lo
-# commiteado. Las exclusiones viven en .gitattributes como `export-ignore`.
-git archive --format=tar --prefix=wp-autofirma/ HEAD | tar -x -C "${staging}"
-
-# El plugin depende en ejecución de erseco/autofirma-intermediate-server, y
-# quien instala un plugin de WordPress no ejecuta Composer: las dependencias
-# tienen que viajar dentro del ZIP. Los manifiestos se sacan de HEAD y no del
-# árbol de trabajo, porque están marcados `export-ignore` y el paquete debe
-# corresponder al commit, no a lo que haya sin commitear.
-git show HEAD:composer.json > "${staging}/wp-autofirma/composer.json"
-git show HEAD:composer.lock > "${staging}/wp-autofirma/composer.lock"
-
-composer install \
-  --working-dir="${staging}/wp-autofirma" \
-  --no-dev \
-  --no-interaction \
-  --no-progress \
-  --optimize-autoloader \
-  --quiet
-
-# Los manifiestos ya han cumplido su función: lo que se distribuye es `vendor/`.
-rm -f "${staging}/wp-autofirma/composer.json" "${staging}/wp-autofirma/composer.lock"
-
+# `--force` no vacía el ZIP anterior: la versión 3.1 de dist-archive delega en el
+# binario `zip`, que AÑADE a un archivo existente. Sin este borrado, un fichero
+# que una regla nueva de .distignore deje fuera seguiría dentro del paquete de
+# una construcción anterior.
 rm -f "dist/wp-autofirma-${version}.zip"
-( cd "${staging}" && zip -qr "wp-autofirma-${version}.zip" wp-autofirma )
-mv "${staging}/wp-autofirma-${version}.zip" "dist/wp-autofirma-${version}.zip"
+
+# Las exclusiones viven en .distignore, que `wp dist-archive` lee del árbol de
+# trabajo. --plugin-dirname es lo que hace que el ZIP se extraiga como
+# wp-autofirma/ aunque el fichero se llame de otra forma: sin él WordPress
+# nombraría la carpeta del plugin según el nombre del ZIP.
+./vendor/bin/wp dist-archive . "$(pwd)/dist/wp-autofirma-${version}.zip" \
+  --plugin-dirname=wp-autofirma --force
 
 printf 'Paquete creado: dist/wp-autofirma-%s.zip\n' "${version}"

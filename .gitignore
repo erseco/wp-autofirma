@@ -5,4 +5,6 @@ coverage.xml
 coverage/
 dist/
 node_modules/
-vendor/
+# Anclado a propósito: `includes/vendor/` es la librería del servidor intermedio
+# que viaja dentro del paquete, y sí está versionada.
+/vendor/

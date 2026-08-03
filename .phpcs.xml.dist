@@ -12,6 +12,9 @@
     <arg value="sp"/>
 
     <exclude-pattern>vendor/*</exclude-pattern>
+    <!-- Librería de terceros vendorizada tal cual para que viaje en el paquete:
+         no sigue las convenciones de WordPress ni debe hacerlo. -->
+    <exclude-pattern>includes/vendor/*</exclude-pattern>
     <exclude-pattern>build/*</exclude-pattern>
 
     <rule ref="WordPress">
