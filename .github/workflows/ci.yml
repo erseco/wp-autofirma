@@ -83,6 +83,12 @@ jobs:
           npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-autofirma \
             ./vendor/bin/phpunit --configuration=phpunit-integration.xml.dist \
             --coverage-clover=coverage-integration.xml
+      # El Plugin Check va en este job porque es el único que tiene a la vez npm
+      # (necesario para construir el ZIP), Composer y wp-env ya levantado.
+      # Comprueba el paquete distribuible y no el árbol de trabajo, que es lo que
+      # de verdad se instala. Los otros tres plugins hermanos ya lo pasaban en CI.
+      - name: Pasar el Plugin Check sobre el ZIP
+        run: make check-plugin
       - name: Publicar en Codecov
         uses: codecov/codecov-action@v5
         with:

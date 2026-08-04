@@ -19,7 +19,7 @@ define( 'MB_IN_BYTES', 1048576 );
  * @return string
  */
 function plugin_dir_path( $file ) {
-    return dirname( $file ) . '/';
+	return dirname( $file ) . '/';
 }
 
 /**
@@ -28,7 +28,7 @@ function plugin_dir_path( $file ) {
  * @return string
  */
 function plugin_dir_url() {
-    return 'https://example.org/wp-content/plugins/wp-autofirma/';
+	return 'https://example.org/wp-content/plugins/wp-autofirma/';
 }
 
 /**
@@ -37,7 +37,7 @@ function plugin_dir_url() {
  * @return bool
  */
 function add_action() {
-    return true;
+	return true;
 }
 
 /**
@@ -46,7 +46,7 @@ function add_action() {
  * @return bool
  */
 function add_filter() {
-    return true;
+	return true;
 }
 
 /**
@@ -55,7 +55,7 @@ function add_filter() {
  * @return bool
  */
 function add_shortcode() {
-    return true;
+	return true;
 }
 
 /**
@@ -66,7 +66,7 @@ function add_shortcode() {
  * @return mixed
  */
 function apply_filters( $hook, $value ) {
-    return $value;
+	return $value;
 }
 
 /**
@@ -76,7 +76,7 @@ function apply_filters( $hook, $value ) {
  * @return string
  */
 function rest_url( $path = '' ) {
-    return 'https://example.org/wp-json/' . $path;
+	return 'https://example.org/wp-json/' . $path;
 }
 
 /**
@@ -86,7 +86,7 @@ function rest_url( $path = '' ) {
  * @return string
  */
 function untrailingslashit( $value ) {
-    return rtrim( $value, '/' );
+	return rtrim( $value, '/' );
 }
 
 // El probe vive en `tests/php/Support/`, así que la raíz del plugin está tres

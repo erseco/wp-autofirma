@@ -10,8 +10,9 @@ librería adapta AutoScript; AutoFirma realiza la operación local.
 
 - Código, clases, métodos, variables y contratos en inglés.
 - Comentarios, docblocks, README, documentación y textos de interfaz en español.
-- PHP con cuatro espacios, sin tabuladores, y WordPress Coding Standards según
-  `.phpcs.xml.dist`.
+- PHP con WordPress Coding Standards sin adaptaciones, según `.phpcs.xml.dist`:
+  eso implica tabuladores, no espacios. Es la misma configuración que
+  `wp-decker`, `wp-documentate` y `wp-exelearning`.
 - JavaScript, JSON y YAML con dos espacios.
 - Escapa toda salida, sanea entradas y aplica `wp_unslash()` antes de sanear
   superglobales.

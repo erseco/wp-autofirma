@@ -9,33 +9,35 @@
   },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "phpcompatibility/phpcompatibility-wp": "^2.1",
     "phpunit/phpunit": "^9.6",
-    "squizlabs/php_codesniffer": "^3.13",
+    "squizlabs/php_codesniffer": "^3.13.5",
     "wp-cli/dist-archive-command": "^3.1",
-    "wp-coding-standards/wpcs": "^3.2",
+    "wp-coding-standards/wpcs": "^3.4",
     "yoast/phpunit-polyfills": "^4.0"
   },
   "scripts": {
+    "check": [
+      "@phpcs",
+      "@test"
+    ],
     "copy-runtime-dependencies": [
       "rm -rf includes/vendor/autofirma-intermediate-server",
       "mkdir -p includes/vendor/autofirma-intermediate-server",
       "cp -r vendor/erseco/autofirma-intermediate-server/src includes/vendor/autofirma-intermediate-server/",
       "cp vendor/erseco/autofirma-intermediate-server/LICENSE includes/vendor/autofirma-intermediate-server/"
     ],
+    "coverage": "phpunit --coverage-clover=coverage.xml",
+    "coverage-integration": "phpunit --configuration=phpunit-integration.xml.dist --coverage-clover=coverage-integration.xml",
+    "fix": "@phpcbf",
+    "phpcbf": "phpcbf --standard=.phpcs.xml.dist",
+    "phpcs": "phpcs --standard=.phpcs.xml.dist",
     "post-install-cmd": [
       "@copy-runtime-dependencies"
     ],
     "post-update-cmd": [
       "@copy-runtime-dependencies"
     ],
-    "check": [
-      "@phpcs",
-      "@test"
-    ],
-    "coverage": "phpunit --coverage-clover=coverage.xml",
-    "coverage-integration": "phpunit --configuration=phpunit-integration.xml.dist --coverage-clover=coverage-integration.xml",
-    "fix": "phpcbf --standard=.phpcs.xml.dist",
-    "phpcs": "phpcs --standard=.phpcs.xml.dist",
     "test": "phpunit",
     "test-integration": "phpunit --configuration=phpunit-integration.xml.dist"
   },

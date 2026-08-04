@@ -70,4 +70,61 @@ printf 'application/vnd.oasis.opendocument.text' > "$work/odf/mimetype"
 printf '<?xml version="1.0"?><office:document-signatures />' > "$work/odf/META-INF/documentsignatures.xml"
 ( cd "$work/odf" && zip -qr - . ) > signed.odt
 
-echo "Generados: signed.pdf unsigned.pdf signed.csig signed.xsig signed.odt"
+# Una autoridad de certificación, para las dos firmas que vienen después. El
+# certificado autofirmado del principio no vale: no lleva basicConstraints, y
+# justo eso es lo que hay que distinguir aquí.
+cat > "$work/ca.cnf" <<'CNF'
+[req]
+distinguished_name = dn
+x509_extensions = ext
+prompt = no
+[dn]
+CN = AUTORIDAD DE PRUEBA
+O = WP AutoFirma
+[ext]
+basicConstraints = critical,CA:TRUE
+keyUsage = critical,keyCertSign,cRLSign
+CNF
+openssl req -x509 -newkey rsa:2048 -keyout "$work/ca-key.pem" -out "$work/ca.pem" \
+    -days 3650 -nodes -config "$work/ca.cnf" 2>/dev/null
+
+# CAdES que lleva dentro la cadena entera. Dentro de un PKCS#7 viajan todos los
+# certificados, y quien firma es la hoja: la autoridad no puede presentarse como
+# firmante.
+cat > "$work/hoja.cnf" <<'CNF'
+[req]
+distinguished_name = dn
+prompt = no
+[dn]
+CN = FIRMANTE CON CADENA
+O = WP AutoFirma
+CNF
+openssl req -new -newkey rsa:2048 -keyout "$work/hoja-key.pem" -out "$work/hoja.csr" \
+    -nodes -config "$work/hoja.cnf" 2>/dev/null
+openssl x509 -req -in "$work/hoja.csr" -CA "$work/ca.pem" -CAkey "$work/ca-key.pem" \
+    -set_serial 4242 -days 3650 -out "$work/hoja.pem" 2>/dev/null
+openssl smime -sign -binary -in "$work/plain.txt" -signer "$work/hoja.pem" \
+    -inkey "$work/hoja-key.pem" -certfile "$work/ca.pem" -outform DER -nodetach \
+    -out signed-cadena.csig 2>/dev/null
+
+# CAdES firmado con un certificado cuyo titular no tiene ni CN, ni OU, ni O. Los
+# hay: algunos certificados de representante identifican con el número de
+# documento y poco más.
+cat > "$work/anonimo.cnf" <<'CNF'
+[req]
+distinguished_name = dn
+prompt = no
+[dn]
+C = ES
+serialNumber = IDCES-99999999R
+CNF
+openssl req -new -newkey rsa:2048 -keyout "$work/anonimo-key.pem" -out "$work/anonimo.csr" \
+    -nodes -config "$work/anonimo.cnf" 2>/dev/null
+openssl x509 -req -in "$work/anonimo.csr" -CA "$work/ca.pem" -CAkey "$work/ca-key.pem" \
+    -set_serial 4243 -days 3650 -out "$work/anonimo.pem" 2>/dev/null
+openssl smime -sign -binary -in "$work/plain.txt" -signer "$work/anonimo.pem" \
+    -inkey "$work/anonimo-key.pem" -outform DER -nodetach \
+    -out signed-sin-nombre.csig 2>/dev/null
+
+echo "Generados: signed.pdf unsigned.pdf signed.csig signed.xsig signed.odt" \
+    "signed-cadena.csig signed-sin-nombre.csig"

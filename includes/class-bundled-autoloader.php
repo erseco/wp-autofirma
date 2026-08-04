@@ -22,55 +22,55 @@ namespace Erseco\WPAutoFirma;
  */
 final class Bundled_Autoloader {
 
-    /**
-     * Prefijo de espacio de nombres que sirve la librería.
-     *
-     * @var string
-     */
-    const NAMESPACE_PREFIX = 'Erseco\\AutoFirma\\IntermediateServer\\';
+	/**
+	 * Prefijo de espacio de nombres que sirve la librería.
+	 *
+	 * @var string
+	 */
+	const NAMESPACE_PREFIX = 'Erseco\\AutoFirma\\IntermediateServer\\';
 
-    /**
-     * Registra el cargador si Composer no ha traído ya la librería.
-     *
-     * @return void
-     */
-    public static function register() {
-        if ( class_exists( self::NAMESPACE_PREFIX . 'IntermediateServer' ) ) {
-            return;
-        }
+	/**
+	 * Registra el cargador si Composer no ha traído ya la librería.
+	 *
+	 * @return void
+	 */
+	public static function register() {
+		if ( class_exists( self::NAMESPACE_PREFIX . 'IntermediateServer' ) ) {
+			return;
+		}
 
-        if ( ! is_dir( self::base_dir() ) ) {
-            return;
-        }
+		if ( ! is_dir( self::base_dir() ) ) {
+			return;
+		}
 
-        spl_autoload_register( array( self::class, 'autoload' ) );
-    }
+		spl_autoload_register( array( self::class, 'autoload' ) );
+	}
 
-    /**
-     * Carga una clase de la librería incluida.
-     *
-     * @param string $class_name Nombre completo de la clase.
-     * @return void
-     */
-    public static function autoload( $class_name ) {
-        if ( 0 !== strpos( $class_name, self::NAMESPACE_PREFIX ) ) {
-            return;
-        }
+	/**
+	 * Carga una clase de la librería incluida.
+	 *
+	 * @param string $class_name Nombre completo de la clase.
+	 * @return void
+	 */
+	public static function autoload( $class_name ) {
+		if ( 0 !== strpos( $class_name, self::NAMESPACE_PREFIX ) ) {
+			return;
+		}
 
-        $relative = substr( $class_name, strlen( self::NAMESPACE_PREFIX ) );
-        $path     = self::base_dir() . str_replace( '\\', '/', $relative ) . '.php';
+		$relative = substr( $class_name, strlen( self::NAMESPACE_PREFIX ) );
+		$path     = self::base_dir() . str_replace( '\\', '/', $relative ) . '.php';
 
-        if ( is_readable( $path ) ) {
-            require_once $path;
-        }
-    }
+		if ( is_readable( $path ) ) {
+			require_once $path;
+		}
+	}
 
-    /**
-     * Devuelve el directorio de la librería incluida.
-     *
-     * @return string Ruta absoluta terminada en barra.
-     */
-    private static function base_dir() {
-        return WP_AUTOFIRMA_PATH . 'includes/vendor/autofirma-intermediate-server/src/';
-    }
+	/**
+	 * Devuelve el directorio de la librería incluida.
+	 *
+	 * @return string Ruta absoluta terminada en barra.
+	 */
+	private static function base_dir() {
+		return WP_AUTOFIRMA_PATH . 'includes/vendor/autofirma-intermediate-server/src/';
+	}
 }

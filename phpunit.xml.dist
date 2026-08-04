@@ -9,6 +9,16 @@
             <directory suffix=".php">includes</directory>
             <directory suffix=".php">admin</directory>
         </include>
+        <!--
+            La librería vendorizada no es código de este plugin y además nunca
+            se ejecuta aquí: cuando hay `vendor/`, quien declara esas clases es
+            el autoload de Composer, así que esta copia se contaba entera como
+            no cubierta y hundía la cifra sin que hubiera nada que probar.
+            Queda fuera igual que en `.phpcs.xml.dist`.
+        -->
+        <exclude>
+            <directory suffix=".php">includes/vendor</directory>
+        </exclude>
     </coverage>
 
     <testsuites>
