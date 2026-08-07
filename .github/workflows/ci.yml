@@ -46,7 +46,7 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: composer coverage
       - name: Publicar en Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           use_oidc: true
           files: ./coverage.xml
@@ -90,7 +90,7 @@ jobs:
       - name: Pasar el Plugin Check sobre el ZIP
         run: make check-plugin
       - name: Publicar en Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           use_oidc: true
           files: ./coverage-integration.xml
@@ -120,7 +120,7 @@ jobs:
       # sola vez en lugar de una por cada entrada de la matriz.
       - name: Publicar en Codecov
         if: matrix.node == 24
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           use_oidc: true
           files: ./coverage/lcov.info
