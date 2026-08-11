@@ -4,6 +4,9 @@
   "private": true,
   "description": "Integración de AutoFirma con la biblioteca de medios de WordPress",
   "license": "GPL-2.0-or-later",
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/erseco/wp-autofirma.git"
