@@ -2,7 +2,7 @@
 Contributors: erseco
 Tags: autofirma, digital signature, pades, media library
 Requires at least: 6.5
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 0.1.0
 License: GPLv2 or later
