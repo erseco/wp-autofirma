@@ -23,7 +23,7 @@
     "@erseco/autofirma-client": "^1.9.3-canary.20260814200535.6dbe776"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.11",
     "@wordpress/env": "^11.13.0",
     "esbuild": "^0.28.2",
     "jsdom": "^30.0.1",
