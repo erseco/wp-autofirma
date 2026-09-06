@@ -1,3 +1,10 @@
+# Espera PHP unitario, PHP de integración y JavaScript antes de publicar resultados.
+codecov:
+  notify:
+    after_n_builds: 3
+comment:
+  after_n_builds: 3
+
 # Cobertura mínima exigida tanto al proyecto completo como a cada parche.
 coverage:
   status:
