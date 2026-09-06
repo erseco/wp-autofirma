@@ -131,3 +131,23 @@ intermedio, seguridad, y los registros de arquitectura.
 
 GPL-2.0-or-later. AutoFirma y AutoScript mantienen sus propias licencias y
 marcas.
+
+## Firmar varios PDF
+
+En **Medios → Biblioteca → vista de lista**, marca varios PDF y elige la acción
+múltiple **Firmar PDF con AutoFirma**. La pantalla enumera los seleccionados y
+ofrece una sola configuración de sello: el mismo texto, página y coordenadas
+se aplican a todos. Comprueba que esa página y posición existen en cada PDF.
+
+AutoFirma procesa un lote local. Cada documento correcto se guarda como un
+adjunto nuevo y se ofrece para descargar. Los errores se muestran por archivo;
+si WordPress no puede guardar un resultado, su descarga sigue disponible.
+No repitas todo el lote para recuperar un documento fallido: vuelve a seleccionar
+solo los pendientes. El flujo individual sigue disponible.
+
+Se reutilizan los permisos y rutas REST existentes. No se necesita servidor de
+firma trifásica. Cuando se usa el transporte intermedio, su límite de 20 MiB por
+mensaje se aplica al lote completo ya codificado, no a cada PDF.
+
+El cliente se instala desde el canal `canary` de npm. `package-lock.json`
+registra la versión resuelta para que `npm ci` y el build sean reproducibles.

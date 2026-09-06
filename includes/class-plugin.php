@@ -56,6 +56,8 @@ final class Plugin {
 		add_filter( 'rest_pre_serve_request', array( $intermediate, 'serve_as_text' ), 10, 3 );
 		add_action( 'admin_menu', array( $media_page, 'register_page' ) );
 		add_action( 'admin_enqueue_scripts', array( $media_page, 'enqueue_assets' ) );
+		add_filter( 'bulk_actions-upload', array( $media_page, 'add_bulk_action' ) );
+		add_filter( 'handle_bulk_actions-upload', array( $media_page, 'handle_bulk_action' ), 10, 3 );
 		add_filter( 'media_row_actions', array( $media_page, 'add_media_action' ), 10, 2 );
 
 		add_action( 'add_attachment', array( $signature_index, 'scan_new_attachment' ) );

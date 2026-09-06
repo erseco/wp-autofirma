@@ -53,7 +53,7 @@ class MediaPageTest extends WP_UnitTestCase {
 	 * Limpia lo encolado entre pruebas.
 	 */
 	public function tear_down() {
-		unset( $_GET['attachment_id'] );
+		unset( $_GET['attachment_id'], $_GET['attachment_ids'] );
 
 		parent::tear_down();
 	}
@@ -77,6 +77,25 @@ class MediaPageTest extends WP_UnitTestCase {
 
 		$this->assertArrayHasKey( 'admin_page_wp-autofirma-sign', $_registered_pages );
 		$this->assertNotContains( 'wp-autofirma-sign', $slugs );
+	}
+
+	/** La pantalla oculta prepara el título antes de cargar admin-header.php. */
+	public function test_hidden_page_sets_its_title_before_the_admin_header() {
+		global $title;
+
+		$previous_title = $title;
+		try {
+			$title = null;
+			$hook  = $this->register_and_get_hook();
+			$this->assertNull( $title, 'Registrar el menú no debe alterar el título de otras pantallas.' );
+			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Nombre del hook de carga del núcleo.
+			do_action( 'load-' . $hook );
+			$this->assertSame( 'Firmar con AutoFirma', $title );
+			$this->assertSame( $title, get_admin_page_title() );
+			$this->assertSame( 'Firmar con AutoFirma', strip_tags( $title ) );
+		} finally {
+			$title = $previous_title;
+		}
 	}
 
 	/**
@@ -209,7 +228,7 @@ class MediaPageTest extends WP_UnitTestCase {
 		// `wp_localize_script()` convierte todos los valores a cadena, así que
 		// el identificador llega entrecomillado. El navegador solo lo usa para
 		// componer la ruta REST, de modo que le da igual.
-		$this->assertStringContainsString( '"attachmentId":"' . $this->attachment_id . '"', (string) $data );
+		$this->assertStringContainsString( '"attachmentIds":[' . $this->attachment_id . ']', (string) $data );
 		$this->assertStringContainsString( 'nonce', (string) $data );
 	}
 
@@ -265,6 +284,78 @@ class MediaPageTest extends WP_UnitTestCase {
 			'https://sede.example.org/autoscript.js',
 			wp_scripts()->registered['wp-autofirma-autoscript']->src
 		);
+	}
+
+	/** La acción múltiple abre una selección única y conserva las otras acciones. */
+	public function test_bulk_action_redirects_to_selected_documents() {
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Nombre del hook del núcleo.
+		$actions = apply_filters( 'bulk_actions-upload', array() );
+		$this->assertArrayHasKey( 'wp_autofirma_sign', $actions );
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Nombre del hook del núcleo.
+		$redirect = apply_filters( 'handle_bulk_actions-upload', 'original', 'wp_autofirma_sign', array( $this->attachment_id, 43, $this->attachment_id ) );
+		parse_str( wp_parse_url( $redirect, PHP_URL_QUERY ), $query );
+		$this->assertSame( 'wp-autofirma-sign', $query['page'] );
+		$this->assertSame( $this->attachment_id . ',43', $query['attachment_ids'] );
+		$this->assertSame( 'original', $this->page->handle_bulk_action( 'original', 'other', array( 43 ) ) );
+	}
+
+	/** La selección de varios PDF comparte un solo formulario de sello. */
+	public function test_batch_renders_one_watermark_form() {
+		$second                 = self::factory()->attachment->create(
+			array(
+				'post_mime_type' => 'application/pdf',
+				'post_title'     => 'Segundo PDF',
+			)
+		);
+		$_GET['attachment_ids'] = $this->attachment_id . ',' . $second;
+		ob_start();
+		$this->page->render_page();
+		$output = ob_get_clean();
+		$this->assertStringContainsString( 'Segundo PDF', $output );
+		$this->assertStringContainsString( 'Firmar todos los PDF', $output );
+		$this->assertSame( 1, substr_count( $output, 'id="wp-autofirma-layer2-text"' ) );
+		$this->page->enqueue_assets( $this->register_and_get_hook() );
+		$this->assertStringContainsString( '"attachmentIds":[' . $this->attachment_id . ',' . $second . ']', wp_scripts()->get_data( 'wp-autofirma-admin', 'data' ) );
+	}
+
+	/** No se aceptan selecciones mixtas, malformadas ni documentos inaccesibles. */
+	public function test_invalid_or_inaccessible_selection_has_no_sign_button() {
+		$image = self::factory()->attachment->create( array( 'post_mime_type' => 'image/jpeg' ) );
+		foreach ( array( array( 'nested' ), '0', '1,no', $this->attachment_id . ',' . $image ) as $selection ) {
+			$_GET['attachment_ids'] = $selection;
+			ob_start();
+			$this->page->render_page();
+			$this->assertStringNotContainsString( 'id="wp-autofirma-sign"', ob_get_clean() );
+		}
+		$parent  = self::factory()->post->create(
+			array(
+				'post_status' => 'private',
+				'post_author' => get_current_user_id(),
+			)
+		);
+		$private = self::factory()->attachment->create(
+			array(
+				'post_mime_type' => 'application/pdf',
+				'post_parent'    => $parent,
+				'post_title'     => 'Documento privado',
+			)
+		);
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		$this->assertTrue( current_user_can( 'upload_files' ) );
+		$this->assertFalse( current_user_can( 'read_post', $private ) );
+		$_GET['attachment_ids'] = $this->attachment_id . ',' . $private;
+		ob_start();
+		$this->page->render_page();
+		$output = ob_get_clean();
+		$this->assertStringNotContainsString( 'id="wp-autofirma-sign"', $output );
+		$this->assertStringNotContainsString( 'Documento privado', $output );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		$_GET['attachment_ids'] = (string) $this->attachment_id;
+		ob_start();
+		$this->page->render_page();
+		$this->assertStringNotContainsString( 'id="wp-autofirma-sign"', ob_get_clean() );
+		$this->assertArrayNotHasKey( 'wp_autofirma_sign', $this->page->add_bulk_action( array() ) );
+		$this->assertSame( 'original', $this->page->handle_bulk_action( 'original', 'wp_autofirma_sign', array( $this->attachment_id ) ) );
 	}
 
 	/**
