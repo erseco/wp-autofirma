@@ -42,6 +42,17 @@ final class Media_Page {
 		// adjunto. Un elemento de menú suelto llevaría a una página sin
 		// documento que hacer nada con él.
 		remove_submenu_page( 'upload.php', 'wp-autofirma-sign' );
+
+		// Al ocultar el submenú, WordPress pierde la entrada de la que obtiene
+		// el título. Se fija antes de admin-header.php, que llama a strip_tags().
+		add_action(
+			'load-' . $this->hook_suffix,
+			static function () {
+				global $title;
+				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- WordPress obtiene de este global el título de las pantallas de administración ocultas.
+				$title = __( 'Firmar con AutoFirma', 'wp-autofirma' );
+			}
+		);
 	}
 
 	/**

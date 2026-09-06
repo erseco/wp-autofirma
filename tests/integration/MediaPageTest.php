@@ -79,6 +79,25 @@ class MediaPageTest extends WP_UnitTestCase {
 		$this->assertNotContains( 'wp-autofirma-sign', $slugs );
 	}
 
+	/** La pantalla oculta prepara el título antes de cargar admin-header.php. */
+	public function test_hidden_page_sets_its_title_before_the_admin_header() {
+		global $title;
+
+		$previous_title = $title;
+		try {
+			$title = null;
+			$hook  = $this->register_and_get_hook();
+			$this->assertNull( $title, 'Registrar el menú no debe alterar el título de otras pantallas.' );
+			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Nombre del hook de carga del núcleo.
+			do_action( 'load-' . $hook );
+			$this->assertSame( 'Firmar con AutoFirma', $title );
+			$this->assertSame( $title, get_admin_page_title() );
+			$this->assertSame( 'Firmar con AutoFirma', strip_tags( $title ) );
+		} finally {
+			$title = $previous_title;
+		}
+	}
+
 	/**
 	 * Sin PDF seleccionado se explica cómo llegar a la pantalla.
 	 */
