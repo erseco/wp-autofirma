@@ -158,6 +158,7 @@ class RestControllerTest extends WP_UnitTestCase {
 
 		$original_path     = get_attached_file( $this->attachment_id );
 		$original_contents = file_get_contents( $original_path );
+		$signed_contents   = file_get_contents( dirname( __DIR__ ) . '/php/fixtures/signed.pdf' );
 
 		$response = $this->request(
 			'POST',
@@ -165,7 +166,7 @@ class RestControllerTest extends WP_UnitTestCase {
 			array(
 				'originalAttachmentId' => $this->attachment_id,
 				'filename'             => 'documento_signed.pdf',
-				'signature'            => base64_encode( '%PDF-1.7 firmado' ),
+				'signature'            => base64_encode( $signed_contents ),
 			)
 		);
 
@@ -183,7 +184,83 @@ class RestControllerTest extends WP_UnitTestCase {
 			(string) $this->attachment_id,
 			(string) get_post_meta( $signed_id, '_wp_autofirma_original_attachment_id', true )
 		);
-		$this->assertNotEmpty( get_post_meta( $signed_id, '_wp_autofirma_document_sha256', true ) );
+		$this->assertSame( $signed_contents, file_get_contents( get_attached_file( $signed_id ) ) );
+		$this->assertSame( 'application/pdf', get_post_mime_type( $signed_id ) );
+		$this->assertSame(
+			hash( 'sha256', $signed_contents ),
+			get_post_meta( $signed_id, '_wp_autofirma_document_sha256', true )
+		);
+		$this->assertSame(
+			(string) get_current_user_id(),
+			get_post_meta( $signed_id, '_wp_autofirma_signed_by', true )
+		);
+	}
+
+	/**
+	 * Subir archivos no autoriza a leer ni firmar adjuntos de entradas privadas ajenas.
+	 */
+	public function test_uploader_cannot_read_or_sign_another_users_private_attachment() {
+		$owner  = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$parent = self::factory()->post->create(
+			array(
+				'post_status' => 'private',
+				'post_author' => $owner,
+			)
+		);
+		wp_update_post(
+			array(
+				'ID'          => $this->attachment_id,
+				'post_parent' => $parent,
+				'post_author' => $owner,
+			)
+		);
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		$this->assertTrue( current_user_can( 'upload_files' ) );
+		$this->assertFalse( current_user_can( 'read_post', $this->attachment_id ) );
+		$before = wp_count_posts( 'attachment' );
+
+		$read = $this->request( 'GET', '/wp-autofirma/v1/documents/' . $this->attachment_id );
+		$save = $this->request(
+			'POST',
+			'/wp-autofirma/v1/signatures',
+			array(
+				'originalAttachmentId' => $this->attachment_id,
+				'signature'            => base64_encode( '%PDF-1.7 firmado' ),
+			)
+		);
+
+		$this->assertSame( 403, $read->get_status() );
+		$this->assertArrayNotHasKey( 'attachmentId', $read->get_data() );
+		$this->assertSame( 403, $save->get_status() );
+		$this->assertEquals( $before, wp_count_posts( 'attachment' ) );
+	}
+
+	/**
+	 * Base64 corrupto se rechaza antes de escribir archivos o emitir el evento de firma.
+	 */
+	public function test_corrupt_signature_does_not_write_or_announce_success() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$path     = get_attached_file( $this->attachment_id );
+		$original = file_get_contents( $path );
+		$files    = glob( dirname( $path ) . '/*' );
+		$before   = wp_count_posts( 'attachment' );
+		$events   = did_action( 'wp_autofirma_signed' );
+
+		$response = $this->request(
+			'POST',
+			'/wp-autofirma/v1/signatures',
+			array(
+				'originalAttachmentId' => $this->attachment_id,
+				'signature'            => base64_encode( '%PDF-1.7 firmado' ) . '!',
+			)
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'wp_autofirma_signature_error', $response->get_data()['code'] );
+		$this->assertEquals( $before, wp_count_posts( 'attachment' ) );
+		$this->assertSame( $files, glob( dirname( $path ) . '/*' ) );
+		$this->assertSame( $original, file_get_contents( $path ) );
+		$this->assertSame( $events, did_action( 'wp_autofirma_signed' ) );
 	}
 
 	/**
