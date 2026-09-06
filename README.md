@@ -149,7 +149,5 @@ Se reutilizan los permisos y rutas REST existentes. No se necesita servidor de
 firma trifásica. Cuando se usa el transporte intermedio, su límite de 20 MiB por
 mensaje se aplica al lote completo ya codificado, no a cada PDF.
 
-La dependencia del cliente está fijada temporalmente al commit del
-[PR de lotes](https://github.com/erseco/autofirma-client/pull/10) para que esta
-integración pueda construirse antes de su publicación en npm. Sustituir el pin
-por la versión publicada que incluya ese PR cuando esté disponible.
+El cliente se instala desde el canal `canary` de npm. `package-lock.json`
+registra la versión resuelta para que `npm ci` y el build sean reproducibles.
