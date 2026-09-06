@@ -36,7 +36,7 @@ final class Media_Page {
 			array( $this, 'render_page' )
 		);
 
-		// La pantalla solo tiene sentido sobre un PDF concreto, así que se
+		// La pantalla necesita una selección de PDF, así que se
 		// registra para que exista y respete la capacidad, pero se retira del
 		// menú: se llega desde la acción «Firmar con AutoFirma» del propio
 		// adjunto. Un elemento de menú suelto llevaría a una página sin
@@ -74,6 +74,40 @@ final class Media_Page {
 	}
 
 	/**
+	 * Añade la firma a las acciones múltiples de la vista de lista.
+	 *
+	 * @param array<string, string> $actions Acciones existentes.
+	 * @return array<string, string>
+	 */
+	public function add_bulk_action( $actions ) {
+		if ( current_user_can( 'upload_files' ) ) {
+			$actions['wp_autofirma_sign'] = __( 'Firmar PDF con AutoFirma', 'wp-autofirma' );
+		}
+		return $actions;
+	}
+
+	/**
+	 * Abre la pantalla de confirmación; no firma ni modifica adjuntos.
+	 *
+	 * @param string $redirect URL de vuelta.
+	 * @param string $action Acción elegida.
+	 * @param int[]  $ids Adjuntos seleccionados.
+	 * @return string
+	 */
+	public function handle_bulk_action( $redirect, $action, $ids ) {
+		if ( 'wp_autofirma_sign' !== $action || ! current_user_can( 'upload_files' ) ) {
+			return $redirect;
+		}
+		return add_query_arg(
+			array(
+				'page'           => 'wp-autofirma-sign',
+				'attachment_ids' => implode( ',', wp_parse_id_list( $ids ) ),
+			),
+			admin_url( 'upload.php' )
+		);
+	}
+
+	/**
 	 * Carga recursos únicamente en la pantalla del plugin.
 	 *
 	 * @param string $hook_suffix Pantalla actual.
@@ -84,7 +118,7 @@ final class Media_Page {
 			return;
 		}
 
-		$attachment_id  = $this->get_attachment_id();
+		$attachment_ids = $this->get_attachment_ids();
 		$autoscript_url = $this->get_autoscript_url();
 
 		// AutoScript viaja dentro del plugin: `@erseco/autofirma-client` lo
@@ -123,21 +157,25 @@ final class Media_Page {
 			'wp-autofirma-admin',
 			'wpAutoFirmaSettings',
 			array(
-				'attachmentId' => $attachment_id,
-				'nonce'        => wp_create_nonce( 'wp_rest' ),
-				'restUrl'      => esc_url_raw( rest_url( 'wp-autofirma/v1' ) ),
+				'attachmentIds' => $attachment_ids,
+				'nonce'         => wp_create_nonce( 'wp_rest' ),
+				'restUrl'       => esc_url_raw( rest_url( 'wp-autofirma/v1' ) ),
 				// En móvil no hay WebSocket local con AutoFirma, así que sin
 				// servidor intermedio la firma no puede completarse.
-				'intermediate' => Intermediate_Controller::is_available(),
-				'strings'      => array(
+				'intermediate'  => Intermediate_Controller::is_available(),
+				'strings'       => array(
+					'batchCompleted'      => __( 'Todos los PDF firmados se han guardado como adjuntos nuevos.', 'wp-autofirma' ),
+					'batchPartial'        => __( 'Hay documentos sin firmar o sin guardar. Revisa el resultado de cada PDF; puedes descargar los firmados.', 'wp-autofirma' ),
+					'notSigned'           => __( 'No firmado:', 'wp-autofirma' ),
+					'notSaved'            => __( 'No se pudo guardar en WordPress:', 'wp-autofirma' ),
 					'cancelled'           => __( 'La operación se ha cancelado.', 'wp-autofirma' ),
 					'incompleteWatermark' => __( 'Para el sello visible hacen falta las cuatro coordenadas.', 'wp-autofirma' ),
 					'emptyWatermark'      => __( 'El sello visible necesita un texto.', 'wp-autofirma' ),
 					'completed'           => __( 'El documento firmado se ha guardado como un adjunto nuevo.', 'wp-autofirma' ),
 					'download'            => __( 'Descargar el PDF firmado', 'wp-autofirma' ),
 					'edit'                => __( 'Abrir el adjunto en WordPress', 'wp-autofirma' ),
-					'loading'             => __( 'Cargando el documento…', 'wp-autofirma' ),
-					'saving'              => __( 'Guardando el documento firmado…', 'wp-autofirma' ),
+					'loading'             => __( 'Cargando los documentos…', 'wp-autofirma' ),
+					'saving'              => __( 'Guardando los documentos firmados…', 'wp-autofirma' ),
 					'signing'             => __( 'Esperando a AutoFirma…', 'wp-autofirma' ),
 					'unknownError'        => __( 'No se pudo completar la firma.', 'wp-autofirma' ),
 				),
@@ -151,16 +189,21 @@ final class Media_Page {
 	 * @return void
 	 */
 	public function render_page() {
-		$attachment_id = $this->get_attachment_id();
-		$attachment    = $attachment_id ? get_post( $attachment_id ) : null;
+		$attachments = array_map( 'get_post', $this->get_attachment_ids() );
+		$valid       = ! empty( $attachments ) && current_user_can( 'upload_files' );
+		foreach ( $attachments as $attachment ) {
+			if ( ! $attachment || 'attachment' !== $attachment->post_type || 'application/pdf' !== $attachment->post_mime_type || ! current_user_can( 'read_post', $attachment->ID ) ) {
+				$valid = false;
+			}
+		}
 		?>
 		<div class="wrap wp-autofirma">
 			<h1><?php esc_html_e( 'Firmar con AutoFirma', 'wp-autofirma' ); ?></h1>
 
-			<?php if ( ! $attachment || 'application/pdf' !== $attachment->post_mime_type ) : ?>
+			<?php if ( ! $valid ) : ?>
 				<div class="notice notice-info inline">
 					<p>
-						<?php esc_html_e( 'Selecciona un PDF en la biblioteca de medios y usa la acción «Firmar con AutoFirma».', 'wp-autofirma' ); ?>
+						<?php esc_html_e( 'Selecciona un PDF o varios PDF accesibles en la vista de lista de la biblioteca de medios y usa la acción «Firmar con AutoFirma».', 'wp-autofirma' ); ?>
 					</p>
 				</div>
 				<p>
@@ -169,24 +212,28 @@ final class Media_Page {
 					</a>
 				</p>
 			<?php else : ?>
-				<?php $this->render_document( $attachment ); ?>
+				<?php $this->render_documents( $attachments ); ?>
 			<?php endif; ?>
 		</div>
 		<?php
 	}
 
 	/**
-	 * Muestra la tarjeta del documento.
+	 * Muestra los documentos y una configuración de sello común.
 	 *
-	 * @param WP_Post $attachment Adjunto seleccionado.
+	 * @param WP_Post[] $attachments Adjuntos seleccionados.
 	 * @return void
 	 */
-	private function render_document( WP_Post $attachment ) {
+	private function render_documents( array $attachments ) {
 		?>
 		<div class="wp-autofirma__card">
-			<h2><?php echo esc_html( get_the_title( $attachment ) ); ?></h2>
+			<ul>
+				<?php foreach ( $attachments as $attachment ) : ?>
+					<li><?php echo esc_html( get_the_title( $attachment ) ); ?></li>
+				<?php endforeach; ?>
+			</ul>
 			<p>
-				<?php esc_html_e( 'El original no se sobrescribirá. El resultado se guardará como un adjunto nuevo.', 'wp-autofirma' ); ?>
+				<?php esc_html_e( 'Los originales no se sobrescribirán. Cada PDF firmado se guardará como un adjunto nuevo.', 'wp-autofirma' ); ?>
 			</p>
 
 			<?php $this->render_visible_signature_fields(); ?>
@@ -196,14 +243,14 @@ final class Media_Page {
 				class="button button-primary button-hero"
 				id="wp-autofirma-sign"
 			>
-				<?php esc_html_e( 'Firmar PDF', 'wp-autofirma' ); ?>
+				<?php echo esc_html( count( $attachments ) > 1 ? __( 'Firmar todos los PDF', 'wp-autofirma' ) : __( 'Firmar PDF', 'wp-autofirma' ) ); ?>
 			</button>
 
 			<p id="wp-autofirma-status" role="status" aria-live="polite">
 				<span id="wp-autofirma-check" class="dashicons dashicons-yes-alt" aria-hidden="true" hidden></span>
 				<span id="wp-autofirma-message"></span>
 			</p>
-			<p id="wp-autofirma-result" hidden></p>
+			<div id="wp-autofirma-result" tabindex="-1" hidden></div>
 		</div>
 		<?php
 	}
@@ -231,7 +278,7 @@ final class Media_Page {
 			</p>
 
 			<p class="description">
-				<?php esc_html_e( 'La firma es igual de válida sin él: el sello solo la hace visible al abrir el documento.', 'wp-autofirma' ); ?>
+				<?php esc_html_e( 'El sello solo hace visible la firma. Se aplicarán el mismo texto, página y coordenadas a todos los PDF; comprueba que esa posición existe en todos ellos.', 'wp-autofirma' ); ?>
 			</p>
 
 			<?php // Un `fieldset` deshabilitado apaga todo lo que contiene, sin recorrer campo por campo. ?>
@@ -344,18 +391,19 @@ final class Media_Page {
 	}
 
 	/**
-	 * Devuelve el adjunto solicitado o el creado por Playground.
+	 * Lee la selección sin modificar documentos; REST vuelve a comprobar permisos.
 	 *
-	 * @return int
+	 * @return int[]
 	 */
-	private function get_attachment_id() {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Parámetro de navegación de solo lectura: elige qué adjunto mostrar, no muta nada. La mutación va por REST y sí exige nonce.
-		$attachment_id = isset( $_GET['attachment_id'] )
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Ver arriba.
-			? absint( wp_unslash( $_GET['attachment_id'] ) )
-			: 0;
-
-		return $attachment_id;
+	private function get_attachment_ids() {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Navegación de solo lectura. Las mutaciones siguen usando REST con nonce.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Se rechazan tipos y sintaxis inválidos y se normaliza con wp_parse_id_list justo debajo.
+		$requested = isset( $_GET['attachment_ids'] ) ? wp_unslash( $_GET['attachment_ids'] ) : ( isset( $_GET['attachment_id'] ) ? wp_unslash( $_GET['attachment_id'] ) : '' );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		if ( ! is_string( $requested ) || ! preg_match( '/^[0-9]+(?:,[0-9]+)*$/D', $requested ) ) {
+			return array();
+		}
+		return array_values( array_filter( wp_parse_id_list( $requested ) ) );
 	}
 
 	/**

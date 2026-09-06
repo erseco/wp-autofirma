@@ -142,79 +142,137 @@ function watermarkParameters() {
 }
 
 /**
- * Firma el PDF con AutoFirma.
+ * Firma uno o varios PDF con la misma configuración de sello.
  *
- * @param {string} data Documento Base64.
- * @returns {Promise<string>} PDF firmado en Base64.
+ * @param {object[]} documents Documentos descargados.
+ * @param {object} parameters Parámetros comunes, leídos antes de firmar.
+ * @returns {Promise<object>} Resultados individuales del lote.
  */
-async function sign(data) {
-  const parameters = { mode: "implicit", ...watermarkParameters() };
-  const servlets = await openIntermediateSession();
-  // AutoScript se encola siempre desde el propio plugin, así que el objeto
-  // global existe; si faltara, el constructor lanza AutoScriptUnavailableError.
-  const client = new AutoFirmaClient(servlets);
+async function signDocuments(documents, parameters) {
+  const client = new AutoFirmaClient(await openIntermediateSession());
   client.initialize();
-  const signed = await client.sign({
-    data,
+  if (documents.length === 1) {
+    const signed = await client.sign({
+      data: documents[0].data,
+      format: "PAdES",
+      parameters,
+    });
+    return {
+      signs: [
+        {
+          id: String(documents[0].attachmentId),
+          result: "DONE_AND_SAVED",
+          signature: signed.signature,
+        },
+      ],
+    };
+  }
+  return client.signBatch({
+    documents: documents.map(({ attachmentId, data }) => ({
+      id: String(attachmentId),
+      data,
+    })),
     format: "PAdES",
     parameters,
+    stopOnError: false,
   });
-
-  return signed.signature;
 }
 
 /**
- * Orquesta descarga, firma local y guardado.
+ * Orquesta lectura, firma y guardado; conserva descargas si falla WordPress.
  */
 async function handleSign() {
   button.disabled = true;
   result.hidden = true;
+  result.replaceChildren();
 
   try {
+    const parameters = { mode: "implicit", ...watermarkParameters() };
+    const ids = settings.attachmentIds ?? [settings.attachmentId];
+    const documents = [];
     status.textContent = settings.strings.loading;
-    const documentData = await request(`/documents/${settings.attachmentId}`);
-
+    // La API comprueba el permiso de cada documento antes de lanzar AutoFirma.
+    for (const id of ids) {
+      documents.push(await request(`/documents/${id}`));
+    }
     status.textContent = settings.strings.signing;
-    const signature = await sign(documentData.data);
+    const batch = await signDocuments(documents, parameters);
 
-    status.textContent = settings.strings.saving;
-    const saved = await request("/signatures", {
-      method: "POST",
-      body: JSON.stringify({
-        originalAttachmentId: documentData.attachmentId,
-        filename: createSignedFilename(documentData.filename),
-        signature,
-      }),
-    });
-
-    status.textContent = settings.strings.completed;
-
-    // El documento ya está firmado y guardado: repetir la operación sobre el
-    // mismo original solo crearía adjuntos duplicados. Se retiran el formulario
-    // y el botón, y queda lo único que ahora tiene sentido hacer, que es
-    // llevarse el resultado.
-    document.querySelector("#wp-autofirma-check")?.removeAttribute("hidden");
+    // Ya hubo respuesta nativa: no repetir el lote y duplicar firmas guardadas.
+    button.hidden = true;
     document
       .querySelector(".wp-autofirma__watermark")
       ?.setAttribute("hidden", "");
-    button.hidden = true;
-
     result.hidden = false;
-    result.replaceChildren();
+    status.textContent = settings.strings.saving;
+    let completed = 0;
+    const resultsById = new Map(batch.signs.map((item) => [item.id, item]));
 
-    const filename = createSignedFilename(documentData.filename);
-    const download = document.createElement("a");
-    download.href = URL.createObjectURL(toPdfBlob(signature));
-    download.download = filename;
-    download.textContent = settings.strings.download;
-    result.append(download);
+    for (const documentData of documents) {
+      const item = document.createElement("p");
+      if (documents.length > 1) {
+        const name = document.createElement("strong");
+        name.textContent = documentData.filename;
+        item.append(name, ": ");
+      }
+      result.append(item);
+      const signed = resultsById.get(String(documentData.attachmentId));
+      if (!signed || signed.result !== "DONE_AND_SAVED" || !signed.signature) {
+        item.append(
+          settings.strings.notSigned,
+          " ",
+          signed?.description ??
+            signed?.result ??
+            settings.strings.unknownError,
+        );
+        continue;
+      }
 
-    if (saved.editUrl) {
-      const edit = document.createElement("a");
-      edit.href = saved.editUrl;
-      edit.textContent = settings.strings.edit;
-      result.append(" · ", edit);
+      try {
+        const filename = createSignedFilename(documentData.filename);
+        const download = document.createElement("a");
+        download.href = URL.createObjectURL(toPdfBlob(signed.signature));
+        download.download = filename;
+        download.textContent = settings.strings.download;
+        item.append(download);
+
+        const saved = await request("/signatures", {
+          method: "POST",
+          body: JSON.stringify({
+            originalAttachmentId: documentData.attachmentId,
+            filename,
+            signature: signed.signature,
+          }),
+        });
+        completed += 1;
+        if (saved.editUrl) {
+          const edit = document.createElement("a");
+          edit.href = saved.editUrl;
+          edit.textContent = settings.strings.edit;
+          item.append(" · ", edit);
+        }
+      } catch (error) {
+        item.append(
+          " · ",
+          settings.strings.notSaved,
+          " ",
+          error instanceof Error
+            ? error.message
+            : settings.strings.unknownError,
+        );
+      }
     }
+
+    if (completed === documents.length) {
+      status.textContent =
+        documents.length === 1
+          ? settings.strings.completed
+          : settings.strings.batchCompleted;
+      document.querySelector("#wp-autofirma-check")?.removeAttribute("hidden");
+    } else {
+      status.textContent = settings.strings.batchPartial;
+    }
+    result.focus();
   } catch (error) {
     status.textContent =
       error instanceof Error ? error.message : settings.strings.unknownError;

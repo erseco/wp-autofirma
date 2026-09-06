@@ -6,3 +6,4 @@
 | [SDD-0002](SDD-0002-senalizacion-de-firmas.md)       | Señalización de firmas y shortcodes     | Implementado | 2026-08-01 |
 | [SDD-0003](SDD-0003-servidor-intermedio.md)          | Servidor intermedio para firma en móvil | Implementado | 2026-08-01 |
 | [SDD-0004](SDD-0004-empaquetado-con-dist-archive.md) | Empaquetado con `wp dist-archive`       | Borrador     | 2026-08-03 |
+| [SDD-0005](SDD-0005-firma-pdf-lotes.md)              | Firma de varios PDF con sello común     | Implementado | 2026-09-06 |

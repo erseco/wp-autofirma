@@ -87,6 +87,25 @@ var WPAutoFirmaAdmin = (() => {
       );
     });
   }
+  function readBatchResults(data, ids) {
+    const signs = data?.signs;
+    const remaining = new Set(ids);
+    if (!Array.isArray(signs) || signs.length !== ids.size) {
+      throw new AutoFirmaError(
+        "Invalid batch response",
+        "INVALID_BATCH_RESPONSE"
+      );
+    }
+    for (const item of signs) {
+      if (!item || typeof item.id !== "string" || !remaining.delete(item.id) || typeof item.result !== "string" || item.description !== void 0 && typeof item.description !== "string" || item.signature !== void 0 && typeof item.signature !== "string" || item.result === "DONE_AND_SAVED" && !item.signature) {
+        throw new AutoFirmaError(
+          "Invalid batch document result",
+          "INVALID_BATCH_RESPONSE"
+        );
+      }
+    }
+    return signs;
+  }
   function serializeParameters(parameters = {}) {
     return Object.entries(parameters).filter((entry) => {
       return entry[1] !== void 0 && entry[1] !== null;
@@ -126,6 +145,7 @@ var WPAutoFirmaAdmin = (() => {
     }
     throw new Error("El entorno no proporciona una funci\xF3n Base64 compatible.");
   }
+  var activeOperations = /* @__PURE__ */ new WeakSet();
   var DEFAULT_ALGORITHM = "SHA256withRSA";
   var AutoFirmaClient = class {
     autoScript;
@@ -146,6 +166,69 @@ var WPAutoFirmaAdmin = (() => {
      */
     sign(options) {
       return this.execute(this.autoScript.sign, options);
+    }
+    /** Firma un lote local; los parámetros (incluido el sello) son comunes. */
+    signBatch(options) {
+      const api = this.autoScript;
+      const {
+        createBatch,
+        addDocumentToBatch,
+        setLocalBatchProcess,
+        signBatchProcess
+      } = api;
+      if (!createBatch || !addDocumentToBatch || !setLocalBatchProcess || !signBatchProcess) {
+        return this.unsupported("signBatchProcess");
+      }
+      return this.withOperation(async () => {
+        const ids = new Set(options.documents.map(({ id }) => id));
+        if (!ids.size || ids.size !== options.documents.length || [...ids].some((id) => typeof id !== "string" || !id.trim())) {
+          throw new AutoFirmaError(
+            "Batch document IDs must be non-empty and unique",
+            "INVALID_BATCH"
+          );
+        }
+        const documents = await Promise.all(
+          options.documents.map(async ({ id, data }) => ({
+            id,
+            data: await toBase64(data)
+          }))
+        );
+        const parameters = serializeParameters(options.parameters);
+        const filters = serializeParameters(options.certificateFilters);
+        createBatch(
+          options.algorithm ?? DEFAULT_ALGORITHM,
+          options.format,
+          "sign",
+          parameters
+        );
+        for (const { id, data } of documents) {
+          addDocumentToBatch(id, data, null, null, null);
+        }
+        setLocalBatchProcess(true);
+        try {
+          return await new Promise((resolve, reject) => {
+            signBatchProcess(
+              options.stopOnError ?? false,
+              null,
+              null,
+              filters,
+              (data, certificate) => {
+                try {
+                  resolve({
+                    signs: readBatchResults(data, ids),
+                    ...certificate ? { certificate } : {}
+                  });
+                } catch (error) {
+                  reject(error);
+                }
+              },
+              (type, message) => reject(fromNativeError(type, message))
+            );
+          });
+        } finally {
+          setLocalBatchProcess(false);
+        }
+      });
     }
     /**
      * Añade una firma al mismo nivel cuando AutoScript expone la operación.
@@ -170,13 +253,15 @@ var WPAutoFirmaAdmin = (() => {
       if (!this.autoScript.selectCertificate) {
         return this.unsupported("selectCertificate");
       }
-      return new Promise((resolve, reject) => {
-        this.autoScript.selectCertificate?.(
-          serializeParameters(parameters),
-          (certificate) => resolve({ certificate }),
-          (type, message) => reject(fromNativeError(type, message))
-        );
-      });
+      return this.withOperation(
+        () => new Promise((resolve, reject) => {
+          this.autoScript.selectCertificate?.(
+            serializeParameters(parameters),
+            (certificate) => resolve({ certificate }),
+            (type, message) => reject(fromNativeError(type, message))
+          );
+        })
+      );
     }
     /**
      * Pide a AutoFirma que guarde datos en un fichero elegido por la persona
@@ -187,17 +272,19 @@ var WPAutoFirmaAdmin = (() => {
       if (!operation) {
         return this.unsupported("saveDataToFile");
       }
-      return new Promise((resolve, reject) => {
-        operation(
-          options.data,
-          options.title,
-          options.filename,
-          options.extension,
-          options.description,
-          () => resolve(),
-          (type, message) => reject(fromNativeError(type, message))
-        );
-      });
+      return this.withOperation(
+        () => new Promise((resolve, reject) => {
+          operation(
+            options.data,
+            options.title,
+            options.filename,
+            options.extension,
+            options.description,
+            () => resolve(),
+            (type, message) => reject(fromNativeError(type, message))
+          );
+        })
+      );
     }
     /**
      * Comprueba la sincronía del reloj del equipo contra un servidor.
@@ -271,13 +358,30 @@ var WPAutoFirmaAdmin = (() => {
      * Normaliza datos y parámetros antes de delegar en AutoScript.
      */
     async execute(operation, options) {
-      return invokeSignatureOperation(
-        operation,
-        await toBase64(options.data),
-        options.algorithm ?? DEFAULT_ALGORITHM,
-        options.format,
-        serializeParameters(options.parameters)
+      return this.withOperation(
+        async () => invokeSignatureOperation(
+          operation,
+          await toBase64(options.data),
+          options.algorithm ?? DEFAULT_ALGORITHM,
+          options.format,
+          serializeParameters(options.parameters)
+        )
       );
+    }
+    /** Evita pisar callbacks nativos; libera también tras cancelaciones y errores. */
+    async withOperation(run) {
+      if (activeOperations.has(this.autoScript)) {
+        throw new AutoFirmaError(
+          "An AutoFirma operation is already running",
+          "OPERATION_IN_PROGRESS"
+        );
+      }
+      activeOperations.add(this.autoScript);
+      try {
+        return await run();
+      } finally {
+        activeOperations.delete(this.autoScript);
+      }
     }
   };
 
@@ -363,53 +467,110 @@ var WPAutoFirmaAdmin = (() => {
       ...corners
     };
   }
-  async function sign(data) {
-    const parameters = { mode: "implicit", ...watermarkParameters() };
-    const servlets = await openIntermediateSession();
-    const client = new AutoFirmaClient(servlets);
+  async function signDocuments(documents, parameters) {
+    const client = new AutoFirmaClient(await openIntermediateSession());
     client.initialize();
-    const signed = await client.sign({
-      data,
+    if (documents.length === 1) {
+      const signed = await client.sign({
+        data: documents[0].data,
+        format: "PAdES",
+        parameters
+      });
+      return {
+        signs: [
+          {
+            id: String(documents[0].attachmentId),
+            result: "DONE_AND_SAVED",
+            signature: signed.signature
+          }
+        ]
+      };
+    }
+    return client.signBatch({
+      documents: documents.map(({ attachmentId, data }) => ({
+        id: String(attachmentId),
+        data
+      })),
       format: "PAdES",
-      parameters
+      parameters,
+      stopOnError: false
     });
-    return signed.signature;
   }
   async function handleSign() {
     button.disabled = true;
     result.hidden = true;
+    result.replaceChildren();
     try {
+      const parameters = { mode: "implicit", ...watermarkParameters() };
+      const ids = settings.attachmentIds ?? [settings.attachmentId];
+      const documents = [];
       status.textContent = settings.strings.loading;
-      const documentData = await request(`/documents/${settings.attachmentId}`);
-      status.textContent = settings.strings.signing;
-      const signature = await sign(documentData.data);
-      status.textContent = settings.strings.saving;
-      const saved = await request("/signatures", {
-        method: "POST",
-        body: JSON.stringify({
-          originalAttachmentId: documentData.attachmentId,
-          filename: createSignedFilename(documentData.filename),
-          signature
-        })
-      });
-      status.textContent = settings.strings.completed;
-      document.querySelector("#wp-autofirma-check")?.removeAttribute("hidden");
-      document.querySelector(".wp-autofirma__watermark")?.setAttribute("hidden", "");
-      button.hidden = true;
-      result.hidden = false;
-      result.replaceChildren();
-      const filename = createSignedFilename(documentData.filename);
-      const download = document.createElement("a");
-      download.href = URL.createObjectURL(toPdfBlob(signature));
-      download.download = filename;
-      download.textContent = settings.strings.download;
-      result.append(download);
-      if (saved.editUrl) {
-        const edit = document.createElement("a");
-        edit.href = saved.editUrl;
-        edit.textContent = settings.strings.edit;
-        result.append(" \xB7 ", edit);
+      for (const id of ids) {
+        documents.push(await request(`/documents/${id}`));
       }
+      status.textContent = settings.strings.signing;
+      const batch = await signDocuments(documents, parameters);
+      button.hidden = true;
+      document.querySelector(".wp-autofirma__watermark")?.setAttribute("hidden", "");
+      result.hidden = false;
+      status.textContent = settings.strings.saving;
+      let completed = 0;
+      const resultsById = new Map(batch.signs.map((item) => [item.id, item]));
+      for (const documentData of documents) {
+        const item = document.createElement("p");
+        if (documents.length > 1) {
+          const name = document.createElement("strong");
+          name.textContent = documentData.filename;
+          item.append(name, ": ");
+        }
+        result.append(item);
+        const signed = resultsById.get(String(documentData.attachmentId));
+        if (!signed || signed.result !== "DONE_AND_SAVED" || !signed.signature) {
+          item.append(
+            settings.strings.notSigned,
+            " ",
+            signed?.description ?? signed?.result ?? settings.strings.unknownError
+          );
+          continue;
+        }
+        try {
+          const filename = createSignedFilename(documentData.filename);
+          const download = document.createElement("a");
+          download.href = URL.createObjectURL(toPdfBlob(signed.signature));
+          download.download = filename;
+          download.textContent = settings.strings.download;
+          item.append(download);
+          const saved = await request("/signatures", {
+            method: "POST",
+            body: JSON.stringify({
+              originalAttachmentId: documentData.attachmentId,
+              filename,
+              signature: signed.signature
+            })
+          });
+          completed += 1;
+          if (saved.editUrl) {
+            const edit = document.createElement("a");
+            edit.href = saved.editUrl;
+            edit.textContent = settings.strings.edit;
+            item.append(" \xB7 ", edit);
+          }
+        } catch (error) {
+          item.append(
+            " \xB7 ",
+            settings.strings.notSaved,
+            " ",
+            error instanceof Error ? error.message : settings.strings.unknownError
+          );
+        }
+      }
+      if (completed === documents.length) {
+        status.textContent = documents.length === 1 ? settings.strings.completed : settings.strings.batchCompleted;
+        document.querySelector("#wp-autofirma-check")?.removeAttribute("hidden");
+      } else {
+        status.textContent = settings.strings.batchPartial;
+      }
+      result.focus();
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : settings.strings.unknownError;
     } finally {

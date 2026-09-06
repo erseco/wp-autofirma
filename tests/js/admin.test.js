@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from "vitest";
  */
 
 const sign = vi.fn();
+const signBatch = vi.fn();
 const initialize = vi.fn();
 
 vi.mock("@erseco/autofirma-client", () => ({
@@ -21,6 +22,10 @@ vi.mock("@erseco/autofirma-client", () => ({
 
     initialize() {
       initialize();
+    }
+
+    signBatch(options) {
+      return signBatch(options);
     }
 
     sign(options) {
@@ -39,12 +44,14 @@ let construidoCon = [];
  */
 async function montar({
   intermediate = false,
+  ids,
   respuestas = {},
   sello = {},
 } = {}) {
   vi.resetModules();
   construidoCon = [];
   sign.mockReset();
+  signBatch.mockReset();
   initialize.mockReset();
   // El valor por defecto se fija aquí, después del reset: en un `beforeEach`
   // lo borraría esta misma función al montar.
@@ -63,15 +70,20 @@ async function montar({
     </fieldset>
     <fieldset class="wp-autofirma__watermark"></fieldset>
     <p id="wp-autofirma-status"><span id="wp-autofirma-check" hidden></span><span id="wp-autofirma-message"></span></p>
-    <p id="wp-autofirma-result" hidden></p>
+    <div id="wp-autofirma-result" tabindex="-1" hidden></div>
   `;
 
   window.wpAutoFirmaSettings = {
     attachmentId: "42",
+    ...(ids ? { attachmentIds: ids } : {}),
     nonce: "un-nonce",
     restUrl: "https://example.org/wp-json/wp-autofirma/v1",
     intermediate,
     strings: {
+      batchCompleted: "Lote completado",
+      batchPartial: "Lote parcial",
+      notSigned: "No firmado:",
+      notSaved: "No guardado:",
       cancelled: "Cancelado",
       completed: "Completado",
       download: "Descargar",
@@ -375,6 +387,130 @@ describe("orquestación de la firma", () => {
     expect(document.querySelector("#wp-autofirma-check").hidden).toBe(true);
     expect(
       document.querySelector(".wp-autofirma__watermark").hasAttribute("hidden"),
+    ).toBe(false);
+  });
+});
+
+describe("firma por lotes", () => {
+  const second = {
+    ok: true,
+    body: { attachmentId: 43, filename: "segundo.pdf", data: "UERG" },
+  };
+  const signed = (id) => ({
+    id,
+    result: "DONE_AND_SAVED",
+    signature: btoa(`%PDF-${id}`),
+  });
+
+  it("firma una vez con sello común y guarda por ID aunque lleguen desordenados", async () => {
+    const { boton, estado, resultado, fetchSpy } = await montar({
+      ids: [42, 43],
+      respuestas: { "/documents/43": second },
+      sello: { activo: true },
+    });
+    signBatch.mockResolvedValue({ signs: [signed("43"), signed("42")] });
+    boton.click();
+    await esperar();
+    expect(sign).not.toHaveBeenCalled();
+    expect(signBatch).toHaveBeenCalledExactlyOnceWith({
+      documents: [
+        { id: "42", data: "ZGF0b3M=" },
+        { id: "43", data: "UERG" },
+      ],
+      format: "PAdES",
+      stopOnError: false,
+      parameters: expect.objectContaining({
+        layer2Text: "Firmado por $$SUBJECTCN$$",
+        signaturePage: 1,
+        signaturePositionOnPageLowerLeftX: 40,
+      }),
+    });
+    const saved = fetchSpy.mock.calls
+      .filter(([url]) => url.endsWith("/signatures"))
+      .map(([, init]) => JSON.parse(init.body));
+    expect(
+      saved.map(({ originalAttachmentId, signature }) => [
+        originalAttachmentId,
+        atob(signature),
+      ]),
+    ).toEqual([
+      [42, "%PDF-42"],
+      [43, "%PDF-43"],
+    ]);
+    expect(resultado.querySelectorAll("a[download]")).toHaveLength(2);
+    expect(estado.textContent).toBe("Lote completado");
+    expect(boton.hidden).toBe(true);
+  });
+
+  it("no guarda errores individuales ni omisiones y conserva los éxitos", async () => {
+    const { boton, estado, resultado, fetchSpy } = await montar({
+      ids: [42, 43],
+      respuestas: { "/documents/43": second },
+    });
+    signBatch.mockResolvedValue({
+      signs: [
+        signed("42"),
+        { id: "43", result: "ERROR_PRE", description: "PDF protegido" },
+      ],
+    });
+    boton.click();
+    await esperar();
+    expect(estado.textContent).toBe("Lote parcial");
+    expect(resultado.textContent).toContain("PDF protegido");
+    expect(resultado.querySelectorAll("a[download]")).toHaveLength(1);
+    expect(
+      fetchSpy.mock.calls.filter(([url]) => url.endsWith("/signatures")),
+    ).toHaveLength(1);
+  });
+
+  it("conserva descargas y sigue guardando si WordPress falla para un PDF", async () => {
+    const { boton, estado, resultado, fetchSpy } = await montar({
+      ids: [42, 43],
+      respuestas: { "/documents/43": second },
+    });
+    signBatch.mockResolvedValue({ signs: [signed("42"), signed("43")] });
+    const request = fetchSpy.getMockImplementation();
+    fetchSpy.mockImplementation((url, init) =>
+      url.endsWith("/signatures") &&
+      JSON.parse(init.body).originalAttachmentId === 42
+        ? Promise.resolve({
+            ok: false,
+            json: async () => ({ message: "Disco lleno" }),
+          })
+        : request(url, init),
+    );
+    boton.click();
+    await esperar();
+    expect(estado.textContent).toBe("Lote parcial");
+    expect(resultado.textContent).toContain("No guardado: Disco lleno");
+    expect(resultado.querySelectorAll("a[download]")).toHaveLength(2);
+    expect(
+      fetchSpy.mock.calls.filter(([url]) => url.endsWith("/signatures")),
+    ).toHaveLength(2);
+    expect(boton.hidden).toBe(true);
+  });
+
+  it("no lanza AutoFirma si uno de los documentos no se puede leer", async () => {
+    const { boton, estado } = await montar({ ids: [42, 43] });
+    boton.click();
+    await esperar();
+    expect(signBatch).not.toHaveBeenCalled();
+    expect(estado.textContent).toBe("Error desconocido");
+    expect(boton.hidden).toBe(false);
+  });
+
+  it("permite reintentar tras cancelar el lote sin guardar nada", async () => {
+    const { boton, estado, fetchSpy } = await montar({
+      ids: [42, 43],
+      respuestas: { "/documents/43": second },
+    });
+    signBatch.mockRejectedValue(new Error("Cancelado"));
+    boton.click();
+    await esperar();
+    expect(estado.textContent).toBe("Cancelado");
+    expect(boton.hidden).toBe(false);
+    expect(
+      fetchSpy.mock.calls.some(([url]) => url.endsWith("/signatures")),
     ).toBe(false);
   });
 });
