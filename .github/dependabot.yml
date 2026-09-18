@@ -13,8 +13,9 @@ updates:
         patterns:
           - "*"
 
-  # Dependencias JavaScript. El cliente AutoFirma va en su propio grupo porque
-  # actualizarlo obliga a regenerar el bundle versionado de `build/`.
+  # Dependencias JavaScript. Actualizar `@erseco/autofirma-client` deja
+  # obsoleto el bundle versionado de `build/`; de regenerarlo y empujarlo a la
+  # rama del PR se encarga el job `bundle` de `ci.yml`.
   - package-ecosystem: npm
     directory: /
     schedule:

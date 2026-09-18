@@ -129,3 +129,46 @@ jobs:
         run: git diff --exit-code -- build
       - name: Validar Blueprint
         run: node -e "JSON.parse(require('fs').readFileSync('blueprint.json'))"
+
+  bundle:
+    # El bundle de `build/` está versionado y se genera a partir de
+    # `@erseco/autofirma-client`, así que actualizar esa dependencia lo deja
+    # obsoleto: Dependabot toca `package.json` y el `lock`, nunca ejecuta el
+    # build. Este job lo regenera y lo empuja a la rama del PR en lugar de
+    # obligar a hacerlo a mano.
+    name: Regenerar bundle de Dependabot
+    if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # Dependabot rebasa sus ramas: sin esto, dos ejecuciones sobre la misma
+    # rama competirían por el push y una moriría con un rechazo confuso.
+    concurrency:
+      group: bundle-${{ github.head_ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      # Los scripts de instalación no hacen falta para empaquetar, y son
+      # justo el código de la dependencia recién actualizada: no conviene
+      # ejecutarlos en un job con permiso de escritura.
+      - run: npm ci --ignore-scripts
+      # Un push hecho con `GITHUB_TOKEN` no relanza la CI, así que el árbol
+      # que se empuja tiene que quedar verificado aquí mismo: `check` pasa
+      # formato, pruebas y build antes de tocar la rama.
+      - run: npm run check
+      - name: Empujar el bundle si ha cambiado
+        run: |
+          if git diff --quiet -- build; then
+            echo 'El bundle versionado ya está al día.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build: regenerar bundle tras actualizar dependencias' -- build
+          git push
