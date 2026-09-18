@@ -173,7 +173,10 @@ var WPAutoFirmaAdmin = (() => {
     sign(options) {
       return this.execute(this.autoScript.sign, options);
     }
-    /** Firma un lote local; los parámetros (incluido el sello) son comunes. */
+    /**
+     * Firma un lote local. Los parámetros del lote son comunes; un documento
+     * puede traer los suyos, que AutoFirma usa en lugar de los comunes.
+     */
     signBatch(options) {
       const api = this.autoScript;
       const {
@@ -194,9 +197,10 @@ var WPAutoFirmaAdmin = (() => {
           );
         }
         const documents = await Promise.all(
-          options.documents.map(async ({ id, data }) => ({
+          options.documents.map(async ({ id, data, parameters: parameters2 }) => ({
             id,
-            data: await toBase64(data)
+            data: await toBase64(data),
+            parameters: parameters2 === void 0 ? null : serializeParameters(parameters2)
           }))
         );
         const parameters = serializeParameters(options.parameters);
@@ -207,8 +211,8 @@ var WPAutoFirmaAdmin = (() => {
           "sign",
           parameters
         );
-        for (const { id, data } of documents) {
-          addDocumentToBatch(id, data, null, null, null);
+        for (const { id, data, parameters: parameters2 } of documents) {
+          addDocumentToBatch(id, data, null, null, parameters2);
         }
         setLocalBatchProcess(true);
         try {
