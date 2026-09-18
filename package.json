@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.0",
-    "@wordpress/env": "^11.14.0",
+    "@wordpress/env": "^11.15.0",
     "esbuild": "^0.28.2",
     "jsdom": "^30.0.1",
     "prettier": "^3.6.2",
