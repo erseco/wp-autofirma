@@ -78,7 +78,7 @@ check-plugin: start-if-not-running package ## Pasa el Plugin Check sobre el ZIP 
 	@# guarda en un fichero, se cuentan los ERROR y solo después se limpia la
 	@# copia desempaquetada, para poder fallar sin dejar basura en el contenedor.
 	@TMPFILE=$$(mktemp); \
-	npx wp-env run cli wp plugin check $(DOMAIN)-dist --slug=$(DOMAIN) --ignore-warnings --color 2>&1 | tee $$TMPFILE; \
+	npx wp-env run cli wp plugin check $(DOMAIN)-dist --slug=$(DOMAIN) --exclude-directories=tests,.claude,.agents --ignore-warnings --color 2>&1 | tee $$TMPFILE; \
 	ERRORS=$$(sed 's/\x1B\[[0-9;]*[mK]//g' $$TMPFILE | grep -cE '\bERROR\b' || true); \
 	rm -f $$TMPFILE; \
 	npx wp-env run cli sh -c 'rm -rf wp-content/plugins/$(DOMAIN)-dist' > /dev/null; \
