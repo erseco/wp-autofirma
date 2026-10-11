@@ -115,10 +115,11 @@ Las skills actuales son **de terceros** y se copian tal cual, por lo que están
 excluidas de Prettier: reformatearlas divergiría de su origen y complicaría
 actualizarlas.
 
-| Skill                                                                                 | Origen                                     |
-| ------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `wp-plugin-development`, `wp-rest-api`, `wp-plugin-directory-guidelines`, `blueprint` | `WordPress/agent-skills`, GPL-2.0-or-later |
-| `security-audit`                                                                      | `ateeducacion/wp-decker`                   |
+| Skill                                                                                 | Origen                                        |
+| ------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `wp-plugin-development`, `wp-rest-api`, `wp-plugin-directory-guidelines`, `blueprint` | `WordPress/agent-skills`, GPL-2.0-or-later    |
+| `security-audit`                                                                      | `ateeducacion/wp-decker`                      |
+| `wp-plugin-security`                                                                  | `fernandotellado/ai-skills`, GPL-2.0-or-later |
 
 ## Documentación de arquitectura
 
