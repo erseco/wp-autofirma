@@ -20,7 +20,7 @@
     "test:js": "vitest run --coverage"
   },
   "dependencies": {
-    "@erseco/autofirma-client": "canary"
+    "@erseco/autofirma-client": "^1.9.3"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.3",
