@@ -149,5 +149,5 @@ Se reutilizan los permisos y rutas REST existentes. No se necesita servidor de
 firma trifásica. Cuando se usa el transporte intermedio, su límite de 20 MiB por
 mensaje se aplica al lote completo ya codificado, no a cada PDF.
 
-El cliente se instala desde el canal `canary` de npm. `package-lock.json`
-registra la versión resuelta para que `npm ci` y el build sean reproducibles.
+El cliente se instala desde la versión estable de npm (`^1.9.3`).
+`package-lock.json` registra la versión resuelta para que `npm ci` y el build sean reproducibles.
